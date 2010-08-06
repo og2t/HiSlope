@@ -42,7 +42,7 @@ package hislope.filters.input
 	import flash.events.Event;
 	import flash.utils.Timer;
 	import hislope.events.HiSlopeEvent;
-	import hislope.input.VideoFile;
+	import hislope.controllers.VideoFile;
 	
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 

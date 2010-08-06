@@ -85,15 +85,15 @@ package
 			fpsRater.y = 240 + 10;
 
 			/*var input:WebCam = new WebCam();*/
-			/*var input:VideoPlayer = new VideoPlayer();*/
-			/*input.addVideo("flv/black_or_white_sequence.mov", "B&W Full");*/
-			/*input.addVideo("flv/funny_face.mov", "funny face");*/
-			/*input.addVideo("flv/13006333.mp4", "make up");*/
-			/*input.addVideo("flv/black_or_white.mov", "B&W Video");*/
-			/*input.addVideo("flv/eyes_video.flv", "Eyes Video");*/
-			/*input.addVideo("flv/broda video.flv", "Broda Video");*/
+			var input:VideoPlayer = new VideoPlayer();
+			input.addVideo("videos/black_or_white_sequence.mov", "B&W Full");
+			/*input.addVideo("videos/black_or_white.mov", "B&W Video");*/
+			/*input.addVideo("videos/funny_face.mov", "funny face");*/
+			/*input.addVideo("videos/13006333.mp4", "make up");*/
+			/*input.addVideo("videos/eyes_video.flv", "Eyes Video");*/
+			/*input.addVideo("videos/broda video.flv", "Broda Video");*/
 			
-			var input:PerlinNoise = new PerlinNoise();
+			/*var input:PerlinNoise = new PerlinNoise();*/
 			filterChain.addFilter(input, true);
 			
 			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
