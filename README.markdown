@@ -6,7 +6,7 @@
 
 	import hislope.core.FilterChain;
 	import hislope.display.MetaBitmapData;
-	import hislope.filters.input.WebCam;
+	import hislope.filters.inputs.WebCam;
 	import hislope.gui.Output;
 
 	var filterChain:FilterChain = new FilterChain("hello world");

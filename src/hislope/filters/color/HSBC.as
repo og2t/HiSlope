@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------------------------
 
-	[AS3] PerlinNoise
+	[AS3] HSBC
 	=======================================================================================
-
+	
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
 	http://play.blog2t.net/hislope
 
@@ -27,113 +27,92 @@
 
 ---------------------------------------------------------------------------------------------*/
 
-package hislope.filters.generators
+package hislope.filters.color
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
 	import hislope.display.MetaBitmapData;
 	import hislope.filters.FilterBase;
-	import flash.events.TimerEvent;
-	import flash.events.Event;
-	import flash.utils.Timer;
-	import flash.geom.Point;
-	import hislope.events.HiSlopeEvent;
-	
+	import flash.filters.ColorMatrixFilter;
+	import com.gskinner.geom.ColorMatrix;
+
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	public class PerlinNoise extends FilterBase
+	public class HSBC extends FilterBase
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
-		private static const NAME:String = "Perlin Noise";
+		private static const NAME:String = "HSBC";
 		private static const PARAMETERS:Array = [
 			{
-				name: "fps",
-				label: "fps",
-				current: 25,
-				min: 0.1,
-				max: 60,
-				type: "number"
+				name: "hue",
+				label: "hue",
+				current: 0,
+				min: -180,
+				max: 180,
+				type: "int"
 			}, {
-				name: "numOctaves",
-				label: "octaves",
-				type: "int",
-				current: 2,
-				min: 1,
-				max: 2
+				name: "saturation",
+				label: "saturation",
+				current: 0,
+				min: -100,
+				max: 100,
+				type: "int"
 			}, {
-				name: "base",
-				label: "base",
-				current: 100,
-				max: 640
+				name: "brightness",
+				label: "brightness",
+				current: 0,
+				min: -100,
+				max: 100,
+				type: "int"
 			}, {
-				name: "stitch",
-				current: true
+				name: "contrast",
+				label: "contrast",
+				current: 0,
+				min: -100,
+				max: 100,
+				type: "int"
 			}
 		];
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		private var pointsArray:Array = [new Point(1, 1), new Point(3, 3)];
-		private var timer:Timer;
+		private var colorMatrix:ColorMatrix = new ColorMatrix();
+		private var colorMatrixFilter:ColorMatrixFilter;
 
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
 		
-		public var numOctaves:int;
-		public var base:Number;
-		public var stitch:Boolean;
-		public var fps:int;
-			
+		public var hue:int;
+		public var saturation:int;
+		public var brightness:int;
+		public var contrast:int;
+	
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function PerlinNoise(OVERRIDE:Object = null)
+		public function HSBC(OVERRIDE:Object = null)
 		{
 			init(NAME, PARAMETERS, OVERRIDE);
-			
-			timer = new Timer(int(1000 / fps));
-			timer.addEventListener(TimerEvent.TIMER, render);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
-			pointsArray[0].x += 1;
-			pointsArray[0].y += 1;
-			pointsArray[1].x += 2;
-			pointsArray[1].y += 0;
-			
-			metaBmpData.perlinNoise(base, base, numOctaves, 0, stitch, true, 7, true, pointsArray);
-			
+			metaBmpData.applyFilter(metaBmpData, rect, point, colorMatrixFilter);
 			getPreviewFor(metaBmpData);
 		}
 		
+		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
+		
 		override public function updateParams():void
 		{		
-			if (timer) timer.delay = int(1000 / fps);
+			colorMatrix.reset();
+			colorMatrix.adjustColor(brightness, contrast, saturation, hue);
+			colorMatrixFilter = new ColorMatrixFilter(colorMatrix);
 		}
 		
-		override public function start():void
-		{
-			trace("perlinNoise start");
-			timer.start();
-		}
-		
-		override public function stop():void
-		{
-			trace("perlinNoise stop");
-			timer.stop();
-		}
-		
-		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
-		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
-		
-		private function render(event:TimerEvent):void
-		{
-			dispatchEvent(new Event(HiSlopeEvent.INPUT_RENDERED));
-		}
-		
-		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
-		// HELPERS ////////////////////////////////////////////////////////////////////////////
+		/*var a: int = img.getAvgValue();
+		img.adjustBrightness( Math.exp( (0×80 - a) / 0×80 ) * 0×10 );
+		img.adjustContrast( Math.exp( (0×80 - a) / 0×80 ) );*/
 	}
 }

@@ -204,12 +204,12 @@ package hislope.filters.pixelbender
 		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function Levels(newParams:Object = null) 
+		public function Levels(OVERRIDE:Object = null) 
 		{
 			shader = new Shader(new pbjFile() as ByteArray);
            	shaderFilter = new ShaderFilter(shader);
 			
-			init(NAME, PARAMETERS, newParams, DEBUG_VARS);
+			init(NAME, PARAMETERS, OVERRIDE, DEBUG_VARS);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////

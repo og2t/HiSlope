@@ -27,7 +27,7 @@
 
 ---------------------------------------------------------------------------------------------*/
 
-package hislope.filters.input
+package hislope.filters.inputs
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
@@ -89,10 +89,10 @@ package hislope.filters.input
 			
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function VideoPlayer(newParams:Object = null)
+		public function VideoPlayer(OVERRIDE:Object = null)
 		{
 						
-			init(NAME, PARAMETERS, newParams);
+			init(NAME, PARAMETERS, OVERRIDE);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////

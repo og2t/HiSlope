@@ -108,13 +108,13 @@ package hislope.filters.pixelbender.fx
 		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function LittlePlanet(newParams:Object = null)
+		public function LittlePlanet(OVERRIDE:Object = null)
 		{
 			
 			shader = new Shader(new pbjFile() as ByteArray);
            	shaderFilter = new ShaderFilter(shader);
 			
-			init(NAME, PARAMETERS, newParams);
+			init(NAME, PARAMETERS, OVERRIDE);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////

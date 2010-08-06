@@ -27,7 +27,7 @@
 
 ---------------------------------------------------------------------------------------------*/
 
-package hislope.filters.input
+package hislope.filters.inputs
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
@@ -176,10 +176,10 @@ package hislope.filters.input
 			
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function WebCam(newParams:Object = null)
+		public function WebCam(OVERRIDE:Object = null)
 		{
 						
-			init(NAME, PARAMETERS, newParams, DEBUG_VARS);
+			init(NAME, PARAMETERS, OVERRIDE, DEBUG_VARS);
 			
 			video = new Video(cameraWidth, cameraHeight);
 			
