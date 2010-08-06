@@ -1,0 +1,322 @@
+/**
+ * Little Planet generator (Stereographic projection)
+ * Last update: 15 June 2010
+ *
+ * Changelog:
+ *		1.0		- Initial release
+ *
+ * For more generative graphics experiments see:
+ * http://www.subblue.com/blog
+ *
+ * Licensed under the MIT License:
+ * http://www.opensource.org/licenses/mit-license.php
+ *
+ * 
+ * Credits and references
+ * ======================
+ *
+ * The stereographic projection is taken from:
+ * http://mathworld.wolfram.com/StereographicProjection.html
+ * 
+ * Further information about different Azimuthal projections in additional to stereographic:
+ * http://www.progonos.com/furuti/MapProj/Dither/ProjAz/projAz.html
+ *
+ * A good selection of CC-licensed equirectangular panorama source images can be found here:
+ * http://www.flickr.com/photos/sbprzd/sets/72057594100163739/
+ * http://www.flickr.com/photos/heiwa4126/sets/72157601609820530/
+ * http://www.flickr.com/search/?q=equirectangular&z=e&l=deriv&ss=2&ct=5&mt=all&adv=1
+ *
+ *
+ * Contact
+ * =======
+ *
+ * This plugin is free to use for personal or commercial projects. 
+ * I'd love to hear how you are using it so email me at tom@subblue.com
+ *
+ */
+
+#define PI 3.141592653589793
+#define TWOPI 6.283185307179586
+#define HALFPI 1.570796326794897
+#define PI180 0.017453292519943
+#define DEBUG 0
+
+<languageVersion : 1.0;>
+
+kernel LittlePlanet
+<   namespace : "com.subblue";
+    vendor : "Tom Beddard - www.subblue.com";
+    version : 2;
+    displayname: "Little Planet";
+    description : "Generates a stereographic projection from an equirectangular panorama image to create 'little planet' type images.";
+>
+{
+    
+    
+    parameter float2 size
+	<
+		minValue: float2(200, 200);
+		maxValue: float2(4096, 4096);
+        defaultValue: float2(1024, 512);
+        stepInterval: float2(1, 1);
+        displayName: "Input image size";
+        componentName: "Width|Height";
+        aeDisplayName: "Input image size";
+	>;
+    
+    /*
+    // Seems buggy on OSX
+    parameter float2 size
+	<
+        defaultValue: float2(1024, 512);
+        displayName: "Input image size";
+        componentName: "Width|Height";
+        aeDisplayName: "Input image size";
+        parameterType: "inputSize";
+	>;
+    */
+    
+    parameter float2 outputSize
+	<
+		minValue: float2(200, 200);
+		maxValue: float2(4096, 4096);
+		defaultValue: float2(1024, 512);
+        stepInterval: float2(1, 1);
+        displayName: "Output image size";
+        componentName: "Width|Height";
+        aeDisplayName: "Output image size";
+	>;
+    
+    parameter float2 center
+	<
+		minValue: float2(-1, -1);
+		maxValue: float2(1, 1);
+		defaultValue: float2(0, 0);
+        stepInterval: float2(0.01, 0.01);
+        componentName: "X|Y";
+        displayName: "Center point";
+        aeDisplayName: "Center point";
+	>;
+    
+    parameter float longitude
+	<
+		minValue: 0.0;
+		maxValue: 360.0;
+		defaultValue: 0.0;
+        stepInterval: 0.5;
+        displayName: "Longitude offset";
+        aeDisplayName: "Longitude offset";
+        aeUIControl:"aeAngle";
+	>;
+    
+    parameter float latitude
+	<
+		minValue: 0.0;
+		maxValue: 360.0;
+		defaultValue: 90.0;
+        stepInterval: 0.5;
+        displayName: "Latitude offset";
+        aeDisplayName: "Latitude offset";
+        aeUIControl:"aeAngle";
+	>;
+    
+    parameter float rotate
+	<
+		minValue: -360.0;
+		maxValue: 360.0;
+		defaultValue: 0.0;
+        stepInterval: 0.5;
+        displayName: "Rotate";
+        aeDisplayName: "Rotate";
+        aeUIControl:"aeAngle";
+	>;
+    
+    parameter float zoom
+	<
+		minValue: 0.1;
+		maxValue: 10.0;
+		defaultValue: 0.4;
+        stepInterval: 0.01;
+        displayName: "Zoom";
+        aeDisplayName: "Zoom";
+	>;
+    
+    parameter float wrap
+	<
+		minValue: -2.0;
+		maxValue: 2.0;
+		defaultValue: 0.0;
+        stepInterval: 0.01;
+        displayName: "Wrap effect";
+        aeDisplayName: "Wrap effect";
+	>;
+    
+    parameter float twist
+	<
+		minValue: -1.0;
+		maxValue: 1.0;
+		defaultValue: 0.0;
+        stepInterval: 0.01;
+        displayName: "Twist effect";
+        aeDisplayName: "Twist effect";
+	>;
+    
+    parameter float bulge
+	<
+		minValue: -1.0;
+		maxValue: 1.0;
+		defaultValue: 0.0;
+        stepInterval: 0.01;
+        displayName: "Bulge effect";
+        aeDisplayName: "Bulge effect";
+	>;
+    
+    #if !AIF_FLASH_TARGET
+    parameter int supersamples
+	<
+		minValue:0;
+		maxValue:2;
+		defaultValue:0;
+        previewValue: 0;
+        parameterType: "enum";
+        enumValues: "None|4x|9x";
+		displayName: "Super sampling";
+        aeDisplayName: "Super sampling";
+		description:"Super sampling quality. Number of samples squared per pixel.";
+        aeUIControl: "aePopup";
+        aePopupString: "None|4x|9x";
+	>;
+    
+    region needed(region outputRegion, imageRef inputRef) 
+    {
+        return region(float4(0, 0, size.x, size.y)); 
+    }
+    
+    region changed(region outputRegion, imageRef inputRef) 
+    {
+        return region(float4(0, 0, outputSize.x, outputSize.y)); 
+    }
+    #endif
+    
+    input image4 src;
+    output pixel4 dst;
+    
+    void
+    evaluatePixel()
+    {
+        float2 hsize = size * 0.5;
+        float2 rads = float2(PI / hsize.x, HALFPI / hsize.y);    			// Radians per pixel
+        float4 color = float4(0);
+        float2 ps = float2(0);
+        
+        float rc = cos(radians(rotate));
+        float rs = sin(radians(rotate));
+        float2x2 rotation = float2x2(rc, rs, -rs, rc);
+        
+        #if DEBUG
+        float3 guide = float3(0, 0, 0);
+        float w = 0.05;
+        #endif
+        
+        #if !AIF_FLASH_TARGET
+        float samples = 0.0;
+        float sample_step = 1.0 / float(supersamples + 1);
+        
+        for (float y = 0.0; y < float(supersamples + 1); y += 1.0) {
+            for (float x = 0.0; x < float(supersamples + 1); x += 1.0 ) {
+                ps = float2(x, y) * sample_step;
+        #endif
+        
+                float2 p = (outCoord() + ps - outputSize * 0.5 - center * outputSize) / size.y;
+                p *= rotation;
+                
+                // Stereographic projection
+                float r = length(p);
+                float c = 2.0 * atan(r, 0.5 * (zoom + bulge));
+                
+                float cc = cos(c);
+                float sc = sin(c);
+                float cl = cos(radians(latitude));
+                float sl = sin(radians(latitude));
+                
+                float lat = asin(cc * sl + (p.y * sc * cl) / r) + (wrap * PI);
+                float lon = radians(longitude) + atan(p.x * sc, (r * cl*cc - p.y * sl * sc));
+                
+                // Twist
+                lon += twist * r * PI;
+                
+                // Wrap longitude
+                lon = mod(lon + PI, TWOPI) - PI;
+                
+                if (wrap != 0.0) {
+                    // Reflect the top and bottom to get smooth wrapping
+                    if (lat > TWOPI) {
+                        // Second inner sky reflection (+wrap)
+                        #if DEBUG
+                        if (lat < TWOPI + w) guide = float3(0, 1, 0);
+                        #endif
+                        lat = mod(abs(lat), HALFPI);
+                    
+                    } else if (lat > TWOPI - HALFPI) {
+                        // First inner sky reflection (+wrap)
+                        #if DEBUG
+                        if (lat < TWOPI - HALFPI + w) guide = float3(1, 0, 0);
+                        #endif
+                        lat = mod(abs(lat), HALFPI) - HALFPI;
+                        
+                    } else if (lat > HALFPI) {
+                        // First ground reflection (+wrap)
+                        #if DEBUG
+                        if (lat < HALFPI + w) guide = float3(0, 1, 0);
+                        #endif
+                        lat = PI - lat;
+                    
+                    } else if (lat < -TWOPI) {
+                        // Second outside sky reflection (-wrap)
+                        #if DEBUG
+                        if (lat > -TWOPI - w) guide = float3(0, 0, 1);
+                        #endif
+                        lat = -mod(abs(lat), HALFPI);
+                    
+                    } else if (lat < -TWOPI + HALFPI) {
+                        // Second outside ground reflection (-wrap)
+                        #if DEBUG
+                        if (lat > -TWOPI + HALFPI - w) guide = float3(0, 1, 1);
+                        #endif
+                        lat = HALFPI - mod(abs(lat), HALFPI);
+                    
+                    } else if (lat < -PI) {
+                        // First outside ground reflection (-wrap)
+                        #if DEBUG
+                        if (lat > -PI - w) guide = float3(0, 1, 0);
+                        #endif
+                        lat = mod(abs(lat), HALFPI);
+                        
+                    } else if (lat < -HALFPI) {
+                        // First outside sky reflection (-wrap)
+                        #if DEBUG
+                        if (lat > -HALFPI - w) guide = float3(0, 0, 1);
+                        #endif
+                        lat = -HALFPI + mod(abs(lat), HALFPI);
+                    }
+                }
+                
+                // Convert back to equirectangular coordinates
+                float2 op = -float2(lon, lat) / rads;
+                op.y += bulge * r * hsize.x;
+                
+                color += sampleLinear(src, clamp(hsize - op, float2(0.5), size - float2(0.5)));
+                #if DEBUG
+                if (guide != float3(0)) color.rgb += guide * 0.5;
+                #endif
+        
+        #if !AIF_FLASH_TARGET
+            samples += 1.0;
+            }
+        }
+        color /= samples;
+        #endif
+        
+        dst = color;
+    }
+}

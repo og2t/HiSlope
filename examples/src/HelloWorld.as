@@ -31,7 +31,7 @@ package
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	[SWF(width='800', height='600', frameRate='60', backgroundColor='0x333333')]
+	[SWF(width='800', height='600', frameRate='60', backgroundColor='0x181818')]
 	public class HelloWorld extends Sprite
 	{
 		public function HelloWorld() 

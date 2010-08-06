@@ -1,0 +1,55 @@
+<languageVersion : 1.0;>
+
+kernel Levels
+<   namespace : "com.anttikupila";
+    vendor : "Antti Kupila";
+    version : 1;
+    description : "Levels filter";
+>
+{
+
+    parameter float2 red
+    <
+        minValue: float2(0,0);
+        maxValue: float2(1,1);
+        defaultValue: float2(0,1);
+    >;
+
+    parameter float2 green
+    <
+        minValue: float2(0,0);
+        maxValue: float2(1,1);
+        defaultValue: float2(0,1);
+    >;
+
+    parameter float2 blue
+    <
+        minValue: float2(0,0);
+        maxValue: float2(1,1);
+        defaultValue: float2(0,1);
+    >;
+
+    parameter float2 luminance
+    <
+        minValue: float2(0,0);
+        maxValue: float2(1,1);
+        defaultValue: float2(0,1);
+    >;
+    
+    input image4 src;
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        pixel4 p = sampleNearest(src,outCoord());
+        
+        float lumDiff = luminance[1] - luminance[0];
+        
+        p.r = ((p.r - red[0]) / (red[1] - red[0]) - luminance[0]) / lumDiff;
+        p.g = ((p.g - green[0]) / (green[1] - green[0]) - luminance[0]) / lumDiff;
+        p.b = ((p.b - blue[0]) / (blue[1] - blue[0]) - luminance[0]) / lumDiff;
+        
+        dst = p;
+    }
+}
