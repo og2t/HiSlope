@@ -1,0 +1,1 @@
+package net.nicoptere{	/**	 * @author nicoptere	 */	import net.nicoptere.Point2D;		public class Triangle 	{		public var p1:Point2D;		public var p2:Point2D;		public var p3:Point2D;				public function Triangle(p1:Point2D, p2:Point2D, p3:Point2D)		{			this.p1 = p1;			this.p2 = p2;			this.p3 = p3;			}	}}

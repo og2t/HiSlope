@@ -50,7 +50,7 @@ package hislope.filters.generators
 			{
 				name: "fps",
 				label: "fps",
-				current: 25,
+				current: 40,
 				min: 0.1,
 				max: 60,
 				type: "number"

@@ -42,11 +42,7 @@ package
 	import hislope.filters.inputs.VideoPlayer;
 	import hislope.filters.FilterBase;
 	import hislope.filters.pixelbender.Levels
-	import hislope.filters.color.ColorGrading;
-	import hislope.filters.basic.ShapeDepth;
-	import hislope.filters.detectors.QuickFaceDetector;
-	import hislope.filters.detectors.EyeFinder;
-	import hislope.filters.visuals.MachineVision;
+	import hislope.filters.motion.DirectionCapture;
 
 	import hislope.display.MetaBitmapData;
 	import hislope.events.HiSlopeEvent;
@@ -56,7 +52,7 @@ package
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
 	[SWF(width='800', height='600', frameRate='60', backgroundColor='0x181818')]
-	public class TSMachineVision extends Sprite
+	public class StaticMirror extends Sprite
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 		
@@ -69,43 +65,37 @@ package
 				
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function TSMachineVision() 
+		public function StaticMirror() 
 		{
 			stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align = StageAlign.TOP_LEFT;
 			
-			filterChain = new FilterChain("MACHINE VISION", 320 * 1, 240 * 1, true);
-			addChild(filterChain);
+			filterChain = new FilterChain("Static Mirror", 320 * 1.4, 240 * 1.4, true);
 
 			processedBmpData = new MetaBitmapData(FilterBase.WIDTH, FilterBase.HEIGHT, false, 0);
 			var output:Output = new Output(processedBmpData, "output");
 			addChild(output);
-			output.x = 320 + 30;
+			output.x = 320 + 20;
+			
+			addChild(filterChain);
 		
 			addChild(fpsRater);
-			fpsRater.x = 320 + 30;
-			fpsRater.y = 240 + 10;
+			fpsRater.x = 320 + 20;
+			fpsRater.y = 480 + 10;
 
-			/*var input:WebCam = new WebCam();*/
-			var input:VideoPlayer = new VideoPlayer();
-			/*input.addVideo("videos/black_or_white_sequence.mov", "B&W Full");*/
-			input.addVideo("videos/black_or_white.mov", "B&W Video");
-			/*input.addVideo("videos/funny_face.mov", "funny face");*/
-			/*input.addVideo("videos/13006333.mp4", "make up");*/
-			/*input.addVideo("videos/eyes_video.flv", "Eyes Video");*/
-			/*input.addVideo("videos/broda video.flv", "Broda Video");*/
+			var inputWC:WebCam = new WebCam({scale: 0.7, fps: 15});
+			var inputVP:VideoPlayer = new VideoPlayer();
+			inputVP.addVideo("videos/black_or_white_sequence.mov", "B&W Full");
+			/*inputVP.addVideo("videos/black_or_white.mov", "B&W Video");*/
 			
-			/*var input:PerlinNoise = new PerlinNoise();*/
-			filterChain.addFilter(input, true);
+			filterChain.addFilter(inputVP, false, false, false, false);
+			filterChain.addFilter(inputWC, true);
 			
-			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputVP.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+						
 			filterChain.addFilter(new Levels(), false, false, false, false);
-
-			filterChain.addFilter(new QuickFaceDetector({interval: 0.1}), false);
-			filterChain.addFilter(new EyeFinder(), true);
-			filterChain.addFilter(new ShapeDepth(), true);
-			filterChain.addFilter(new ColorGrading({colorStart: 0x0, colorMiddle: 0x750000, colorEnd: 0xFFFFFF}));
-			filterChain.addFilter(new MachineVision({radiusDeflation: 1, overlayOpacity: 0.5, triangulation: true, lines: true, blur: 1, linesColor: 0xFF9F00, pointsColor: 0xFFFFFF}));
+			filterChain.addFilter(new DirectionCapture(), true);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////

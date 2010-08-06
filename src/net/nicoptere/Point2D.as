@@ -1,0 +1,1 @@
+package net.nicoptere{	/**	 * @author nicoptere	 */	public class Point2D	{		public var id:int;		public var X:Number;		public var Y:Number;				public function Point2D(x:Number, y:Number, id:int = -1)		{			X = x;			Y = y;			if (id != -1) this.id = id;		}				public function equals2D(other:Point2D):Boolean		{			return (X == other.X && Y == other.Y);		}	}}

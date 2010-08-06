@@ -77,7 +77,7 @@ package hislope.core
 			processingWidth:int = 320,
 			processingHeight:int = 240,
 			debug:Boolean = true,
-			fitPreview:Boolean = false
+			fitPreview:Boolean = true
 		) {
 			this.name = name;
 			
@@ -89,7 +89,11 @@ package hislope.core
 
             debugMode = debug;
 			
-			if (stage) init(); else addEventListener(Event.ADDED_TO_STAGE, init, false, 0, true);
+			if (debugMode) if (stage) init(); else addEventListener(Event.ADDED_TO_STAGE, init, false, 0, true);
+			
+			filtersArray = [];
+			filterPanelsArray = [];
+            numFilters = 0;
         }
 
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
@@ -97,7 +101,7 @@ package hislope.core
         public function addFilter(filter:FilterBase, preview:Boolean = false, histogram:Boolean = false, showParams:Boolean = true, enabled:Boolean = true):void
         {
 			trace("adding filter", filter);
-	
+			
 			filtersArray.push(filter);
 
 			if (debugMode)
@@ -106,15 +110,15 @@ package hislope.core
 				panelsHolder.addChild(filterPanel);
 				filterPanelsArray.push(filterPanel);
 				filterPanel.addEventListener(FilterPanel.CHANGE_SIZE, renderPanels);
+				filterPanel.filterEnabled = enabled;
+				filterPanel.previewVisible = preview;
+				filterPanel.histogramVisible = histogram;
+				filterPanel.paramsVisible = showParams;
+			} else {
+				filter.enabled = enabled;
 			}
 
-			filterPanel.filterEnabled = enabled;
-
 			filter.generatePreview = preview;
-			filterPanel.previewVisible = preview;
-
-			filterPanel.histogramVisible = histogram;
-			filterPanel.paramsVisible = showParams;
 			
 			numFilters++;
         }
@@ -198,10 +202,6 @@ package hislope.core
 
 		private function init(event:Event = null):void
 		{
-			filtersArray = [];
-			filterPanelsArray = [];
-            numFilters = 0;
-
 			sizeY = stage.stageHeight;
 
 			vSlider = new VSlider(this, 320, 0, scrollPanels);

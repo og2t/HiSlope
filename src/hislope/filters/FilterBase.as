@@ -37,6 +37,7 @@ package hislope.filters
 	import flash.display.BitmapData;
 	import hislope.filters.IFilter;
 	import hislope.core.FilterChain;
+	import hislope.events.HiSlopeEvent;
 	import hislope.display.MetaBitmapData;
 	/*import net.blog2t.util.print_r;*/
 	import __AS3__.vec.Vector;
@@ -57,6 +58,7 @@ package hislope.filters
 		public static var WIDTH:int = 320;
 		public static var HEIGHT:int = 240;
 		public static var PREVIEW_SCALE:Number = 1;
+		public static var PREVIEW_SMOOTHING:Boolean = true;
 		public static var FIT_PREVIEW:Boolean = true;
 
 		public static var PROCESSED:String = "processed";
@@ -148,6 +150,8 @@ package hislope.filters
 		{
 			// to be implemented in subclasses
 			/*throw new Error(this + " stop() needs to be overwritten.");*/
+			
+			dispatchEvent(new Event(HiSlopeEvent.INPUT_RENDERED));
 		}
 
 		/**
@@ -184,7 +188,7 @@ package hislope.filters
 			_resultBmpData.copyPixels(metaBmpData, rect, point);
 			
 			if (_drawHistogram) drawHistogram();
-			if (_generatePreview) _previewBmpData.draw(_resultBmpData, previewScaleMatrix);
+			if (_generatePreview) _previewBmpData.draw(_resultBmpData, previewScaleMatrix, null, null, null, PREVIEW_SMOOTHING);
 			
 			if (_histogramChannels != 7)
 			{

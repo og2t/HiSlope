@@ -1,6 +1,7 @@
 #HiSlope
 
-
+Proper docs and more examples soon to follow. I am preparing everything for my talk at Assembly Summer in Helsinki.
+Stay patient :)
 
 ##Hello world
 

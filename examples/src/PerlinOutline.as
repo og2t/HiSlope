@@ -43,7 +43,8 @@ package
 	import hislope.filters.inputs.WebCam;
 	import hislope.filters.inputs.VideoPlayer;
 	import hislope.filters.FilterBase;
-	import hislope.filters.pixelbender.Levels
+	import hislope.filters.pixelbender.Levels;
+	import hislope.filters.pixelbender.fx.LittlePlanet;
 	import hislope.filters.color.ColorGrading;
 
 	import hislope.display.MetaBitmapData;
@@ -72,7 +73,7 @@ package
 			stage.scaleMode = StageScaleMode.NO_SCALE;
             stage.align = StageAlign.TOP_LEFT;
 			
-			filterChain = new FilterChain("tests", 320 * 1, 240 * 1, true);
+			filterChain = new FilterChain("Perlin Outline", 320 * 1, 240 * 1, true);
 			addChild(filterChain);
 
 			processedBmpData = new MetaBitmapData(FilterBase.WIDTH, FilterBase.HEIGHT, false, 0);
@@ -84,21 +85,21 @@ package
 			fpsRater.x = 320 + 30;
 			fpsRater.y = 240 + 10;
 
-			/*var input:WebCam = new WebCam();*/
-			var input:VideoPlayer = new VideoPlayer();
-			input.addVideo("videos/black_or_white_sequence.mov", "B&W Full");
-			/*input.addVideo("videos/black_or_white.mov", "B&W Video");*/
-			/*input.addVideo("videos/funny_face.mov", "funny face");*/
-			/*input.addVideo("videos/13006333.mp4", "make up");*/
-			/*input.addVideo("videos/eyes_video.flv", "Eyes Video");*/
-			/*input.addVideo("videos/broda video.flv", "Broda Video");*/
+			var inputWC:WebCam = new WebCam();
+			var inputVP:VideoPlayer = new VideoPlayer();
+			inputVP.addVideo("videos/black_or_white.mov", "B&W Video");
 			
-			/*var input:PerlinNoise = new PerlinNoise();*/
-			filterChain.addFilter(input, true);
+			var inputPN:PerlinNoise = new PerlinNoise();
+			filterChain.addFilter(inputPN, true);
+			filterChain.addFilter(inputVP, false, false, false, false);
+			filterChain.addFilter(inputWC, false, false, false, false);
 			
-			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputPN.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputVP.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			
 			filterChain.addFilter(new Levels(), false);
-
+			filterChain.addFilter(new LittlePlanet(), false, false, false, false);
 			filterChain.addFilter(new PosterizeOutline());
 			filterChain.addFilter(new ColorGrading());
 		}

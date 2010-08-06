@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
 
-	[AS3] LittlePlanet
+	[AS3] Posterize
 	=======================================================================================
 
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
@@ -27,104 +27,52 @@
 
 ---------------------------------------------------------------------------------------------*/
 
-package hislope.filters.pixelbender.fx
+package hislope.filters.basic
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
-	import hislope.display.MetaBitmapData;
-	import flash.events.Event;
 	import flash.display.BitmapData;
-	import flash.display.Shader;
-	import net.blog2t.util.ColorUtils;
 	import hislope.filters.FilterBase;
-	import flash.filters.ShaderFilter;
-	import flash.utils.ByteArray;
+	import hislope.filters.PaletteMap;
+	import net.blog2t.util.BitmapUtils;
+	import hislope.display.MetaBitmapData;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	public class LittlePlanet extends FilterBase
+	public class Posterize extends FilterBase
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
-		private static const NAME:String = "Little Planet";
+		private static const NAME:String = "Posterize";
 		private static const PARAMETERS:Array = [
 			{
-				name: "centerX",
-				label: "center X",
-				max: 1.0,
-				step: 0.01
+				name: "levels",
+				label: "Number of levels",
+				current: 16,
+				min: 1,
+				max: 255,
+				type: "int"
 			}, {
-				name: "centerY",
-				label: "center Y",
-				max: 1.0,
-				step: 0.01
-			}, {
-				name: "longitude",
-				max: 360.0,
-				step: 0.5
-			}, {
-				name: "latitude",
-				current: 90.0,
-				max: 360.0,
-				step: 0.5
-			}, {
-				name: "rotate",
-				label: "rotation",
-				min: -360.0,
-				max: 360.0,
-				step: 0.5
-			}, {
-				name: "zoom",
-				current: 0.4,
-				min: 0.1,
-				max: 10.0,
-				step: 0.01
-			}, {
-				name: "wrap",
-				min: -2.0,
-				max: 2.0,
-				step: 0.01
-			}, {
-				name: "twist",
-				min: -1.0,
-				max: 1.0,
-				step: 0.01
-			}, {
-				name: "bulge",
-				min: -1.0,
-				max: 1.0,
-				step: 0.01
+				name: "grayscale",
+				label: "Desaturate",
+				current: true,
+				type: "boolean"
 			}
 		];
 
-		[Embed("../../../pbj/LittlePlanet.pbj", mimeType="application/octet-stream")]
-		private const pbjFile:Class;
-		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
-
-		private var shaderFilter:ShaderFilter;
-		private var shader:Shader;
+	
+		private var paletteMap:PaletteMap = new PaletteMap();
 
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
-
-		public var latitude:Number;
-		public var longitude:Number;
-		public var centerX:Number;
-		public var centerY:Number;
-		public var rotate:Number;
-		public var zoom:Number;
-		public var wrap:Number;
-		public var twist:Number;
-		public var bulge:Number;
 		
+		private var _levels:Number;
+		private var _grayscale:Boolean;
+			
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function LittlePlanet(OVERRIDE:Object = null)
+		public function Posterize(OVERRIDE:Object = null)
 		{
-			
-			shader = new Shader(new pbjFile() as ByteArray);
-           	shaderFilter = new ShaderFilter(shader);
-			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
 		
@@ -132,29 +80,45 @@ package hislope.filters.pixelbender.fx
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
-			metaBmpData.applyFilter(metaBmpData, rect, point, shaderFilter);
+			if (_grayscale) BitmapUtils.desaturate(metaBmpData);
+		
+			metaBmpData.paletteMap(metaBmpData, rect, point, paletteMap.reds, paletteMap.greens, paletteMap.blues, paletteMap.alphas);
 
 			getPreviewFor(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
-		
+
 		override public function updateParams():void
-		{
-			shader.data.size.value = [320, 240];
-			shader.data.outputSize.value = [320, 240];
-			shader.data.latitude.value = [latitude];
-			shader.data.longitude.value = [longitude];
-			shader.data.center.value = [centerX, centerY];
-			shader.data.rotate.value = [rotate];
-			shader.data.zoom.value = [zoom];
-			shader.data.wrap.value = [wrap];
-			shader.data.twist.value = [twist];
-			shader.data.bulge.value = [bulge];
+		{			
+			paletteMap.posterize(_levels);
 		}
-		
+
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
+		
+		public function get levels():Number
+		{
+			return _levels;
+		}
+		
+		public function set levels(value:Number):void
+		{
+			_levels = value;
+			updateParams();
+		}
+		
+		public function get grayscale():Boolean
+		{
+			return _grayscale;
+		}
+		
+		public function set grayscale(value:Boolean):void
+		{
+			_grayscale = value;
+			updateParams();
+		}
+		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
 	}
 }
