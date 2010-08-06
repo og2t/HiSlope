@@ -97,9 +97,9 @@ package hislope.filters.motion
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		private var areasBmpData:BitmapData;
-		private var sourceBmpData:BitmapData;
-		private var beforeBmpData:BitmapData;
+		private var areasBmpData:MetaBitmapData;
+		private var sourceBmpData:MetaBitmapData;
+		private var beforeBmpData:MetaBitmapData;
 		private var outline:Shape = new Shape();
 		
 		private var motionRect:Rectangle = new Rectangle(100, 100, 100, 100);
@@ -108,9 +108,9 @@ package hislope.filters.motion
 		
 		public function MotionCapture(OVERRIDE:Object = null)
 		{
-			areasBmpData = resultMetaBmpData.clone();
-			beforeBmpData = resultMetaBmpData.clone();
-			sourceBmpData = resultMetaBmpData.clone();
+			areasBmpData = resultMetaBmpData.getClone();
+			beforeBmpData = resultMetaBmpData.getClone();
+			sourceBmpData = resultMetaBmpData.getClone();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 			
@@ -122,6 +122,7 @@ package hislope.filters.motion
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
 			metaBmpData.copyTo(areasBmpData);
+			
 			areasBmpData.draw(beforeBmpData, null, null, BlendMode.DIFFERENCE);
 			metaBmpData.copyTo(beforeBmpData);
 
@@ -152,7 +153,7 @@ package hislope.filters.motion
 			BitmapUtils.copy(sourceBmpData, metaBmpData);
 			sourceBmpData.draw(outline);
 
-			getPreviewFor(sourceBmpData);
+			getPreviewFor(sourceBmpData as MetaBitmapData);
 			/*getPreviewFor(areasBmpData);*/
 		}
 		

@@ -132,6 +132,11 @@ package hislope.display
 			targetBmpData.lock();
 			targetBmpData.copyPixels(this, this.rect, this.rect.topLeft);
 			targetBmpData.unlock();
+			
+			for (var property:Object in this)
+			{
+				targetBmpData[property] = this[property];
+			}
 		}
 		
 		public function processFilter(filter:*):void
