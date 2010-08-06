@@ -86,21 +86,19 @@ package
 			fpsRater.x = 320 + 30;
 			fpsRater.y = 240 + 10;
 
-			/*var input:WebCam = new WebCam();*/
-			var input:VideoPlayer = new VideoPlayer();
-			/*input.addVideo("videos/black_or_white_sequence.mov", "B&W Full");*/
-			input.addVideo("videos/black_or_white.mov", "B&W Video");
-			/*input.addVideo("videos/funny_face.mov", "funny face");*/
-			/*input.addVideo("videos/13006333.mp4", "make up");*/
-			/*input.addVideo("videos/eyes_video.flv", "Eyes Video");*/
-			/*input.addVideo("videos/broda video.flv", "Broda Video");*/
+			/*var inputWC:WebCam = new WebCam();*/
+			var inputVP:VideoPlayer = new VideoPlayer();
+			/*inputVP.addVideo("videos/black_or_white_sequence.mov", "B&W Full");*/
+			inputVP.addVideo("videos/black_or_white.mov", "B&W Video");
+			/*inputVP.addVideo("videos/squint.mov", "Squint");*/
 			
-			/*var input:PerlinNoise = new PerlinNoise();*/
-			filterChain.addFilter(input, true);
+			filterChain.addFilter(inputVP, true);
+			/*filterChain.addFilter(inputWC, false, false, false, false);*/
 			
-			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputVP.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			/*inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);*/
+			
 			filterChain.addFilter(new Levels(), false, false, false, false);
-
 			filterChain.addFilter(new QuickFaceDetector({interval: 0.1}), false);
 			filterChain.addFilter(new EyeFinder(), true);
 			filterChain.addFilter(new ShapeDepth(), true);
