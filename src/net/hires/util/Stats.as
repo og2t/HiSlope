@@ -47,7 +47,7 @@ package net.hires.util
 		private var fps :int, timer:int, ms:int, msPrev	: int = 0;
 		private var mem:Number = 0;
 
-		[Embed(source="/assets/pf_tempesta_seven_condensed.ttf", fontName="PF Tempesta Seven Condensed", mimeType="application/x-font")]
+		[Embed(source="../../../assets/pf_tempesta_seven_condensed.ttf", fontName="PF Tempesta Seven Condensed", mimeType="application/x-font")]
 		private var Ronda:Class;
 
 		public function Stats(visibility:Boolean = false):void
