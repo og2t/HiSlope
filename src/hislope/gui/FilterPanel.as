@@ -12,7 +12,7 @@
 
 	You may NOT charge anything for this source code.
 	This notice and the copyright information must be left intact in any distribution of this source code. 
-	You are encouraged to release any improvements back to the ActionScript community.
+	You are encouraged to release any improvements back to the ActionScript community.w
 
 	VERSION HISTORY:
 	v0.1	Born on 09/07/2009
