@@ -16,6 +16,7 @@
 	
 	VERSION HISTORY:
 	v0.1	Born on 2009-10-26
+	v0.2	Moved the content into Window
 
 	USAGE:
 
