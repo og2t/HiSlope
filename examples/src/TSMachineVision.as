@@ -103,7 +103,7 @@ package
 			filterChain.addFilter(new EyeFinder(), true);
 			filterChain.addFilter(new ShapeDepth(), true);
 			filterChain.addFilter(new ColorGrading({colorStart: 0x0, colorMiddle: 0x750000, colorEnd: 0xFFFFFF}));
-			filterChain.addFilter(new MachineVision({radiusDeflation: 1, overlayOpacity: 0.5, points: false, lines: false, fills: true, blur: 1, linesColor: 0xFF9F00, pointsColor: 0xFFFFFF}));
+			filterChain.addFilter(new MachineVision({radiusDeflation: 1, overlayOpacity: 0.5, points: true, lines: false, fills: false, blur: 1, linesColor: 0xFF9F00, pointsColor: 0xFFFFFF}));
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////

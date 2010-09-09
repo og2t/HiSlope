@@ -181,22 +181,22 @@ package hislope.filters.visuals
 			{
 				var delaunay:Array = Delaunay.Triangulate(pts);
 
-				if (lines || fills)
+				for (var i:int = 0; i < delaunay.length; i++)
 				{
-					for (var i:int = 0; i < delaunay.length; i++)
-					{
-						var t:Triangle = (delaunay[i] as Triangle);
-						t.getCenter();
-						outline.graphics.beginFill(metaBmpData.getPixel(t.center.x, t.center.y));
-						outline.graphics.moveTo(t.p1.X, t.p1.Y);
-						outline.graphics.lineTo(t.p2.X, t.p2.Y);
-						outline.graphics.lineTo(t.p3.X, t.p3.Y);
-						outline.graphics.lineTo(t.p1.X, t.p1.Y);
-					}
+					var t:Triangle = (delaunay[i] as Triangle);
+					t.getCenter();
+					outline.graphics.beginFill(metaBmpData.getPixel(t.center.x, t.center.y), (fills) ? 1 : 0);
+					outline.graphics.moveTo(t.p1.X, t.p1.Y);
+					outline.graphics.lineTo(t.p2.X, t.p2.Y);
+					outline.graphics.lineTo(t.p3.X, t.p3.Y);
+					outline.graphics.lineTo(t.p1.X, t.p1.Y);
 				}
 				
-				if (points) outline.graphics.lineStyle(0, centersColor, 0.75);
-				Voronoi.draw(delaunay, outline, points);
+				if (points)
+				{
+					outline.graphics.lineStyle(0, centersColor, 0.75);
+					Voronoi.draw(delaunay, outline, points);
+				}
 			}
 			
 			outline.graphics.lineStyle(0, pointsColor, 0.75);
@@ -207,13 +207,15 @@ package hislope.filters.visuals
 				{
 					outline.graphics.drawCircle(pt.X, pt.Y, 0.5);
 				}
+				
+				infoArea.text = pts.length + " PTS\n" + delaunay.length + " TRGS";
 			}
 			
 			if (metaBmpData.eyes)
 			{
 				for each (var eyeRect:Rectangle in metaBmpData.eyes)
 				{
-					/*outline.graphics.drawCircle(eyeRect.x + eyeRect.width / 2, eyeRect.y + eyeRect.height / 2, (eyeRect.width + eyeRect.height) * 0.3);*/
+					outline.graphics.drawCircle(eyeRect.x + eyeRect.width / 2, eyeRect.y + eyeRect.height / 2, (eyeRect.width + eyeRect.height) * 0.3);
 				}
 			}
 			
@@ -225,8 +227,6 @@ package hislope.filters.visuals
 			
 			matrix.identity();
 			matrix.translate(spotlight.centerX + spotlight.radius + 10, spotlight.centerY);
-			
-			infoArea.text = pts.length + " PTS\n" + delaunay.length + " TRGS";
 			
 			metaBmpData.draw(infoArea, matrix);
 
