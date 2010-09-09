@@ -12,7 +12,7 @@
 
 	You may NOT charge anything for this source code.
 	This notice and the copyright information must be left intact in any distribution of this source code. 
-	You are encouraged to release any improvements back to the ActionScript community.w
+	You are encouraged to release any improvements back to the ActionScript community.
 
 	VERSION HISTORY:
 	v0.1	Born on 09/07/2009
@@ -195,7 +195,7 @@ package hislope.gui
 			
 			resetButton = new PushButton(window.content, 10, offsetY + 5, "RESET", resetParams);
 			resetButton.setSize(50, 15);
-			rndButton = new PushButton(window.content, 10 + 60, offsetY + 5, "RANDOMISE", randomiseParams);
+			rndButton = new PushButton(window.content, 10 + 60, offsetY + 5, "RANDOMISE", onRandomise);
 			rndButton.setSize(70, 15);
 			copyParamsButton = new PushButton(window.content, 140 + 10, offsetY + 5, "COPY PARAMS", copyParams);
 			copyParamsButton.setSize(80, 15);
@@ -224,7 +224,6 @@ package hislope.gui
 			}
 			
 			vbox.addChild(previewBmp);
-
 			vbox.addChild(histogram);
 			
 			var line:Shape = new Shape();
@@ -285,6 +284,11 @@ package hislope.gui
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
+
+		private function onRandomise(event:MouseEvent):void
+		{
+			randomiseParams();
+		}
 
 		private function render(event:Event):void
 		{
@@ -385,11 +389,14 @@ package hislope.gui
 			filter.resetParams();
 		}
 		
-		private function randomiseParams(event:Event = null):void
+		public function randomiseParams(coloursOnly:Boolean = false):void
 		{
 			for each (var param:Object in filter.params)
 			{
 				if (param.type == "button") continue;
+				if (coloursOnly && !(param.type == "rgb" || param.type == "hex" || param.type == "color")) continue;
+				
+				if (!coloursOnly && param.lock) continue;
 				
 				var min:Number = param.min;
 				var max:Number = param.max;
@@ -413,7 +420,9 @@ package hislope.gui
 
 			for each (var param:Object in filter.params)
 			{
-				var object:String = param.name + ": " + filter.getParamValue(param.name);
+				if (param.type == "button") continue;
+				
+				var object:String = param.name + ": " + filter.getParamValue(param.name).toFixed(3);
 				
 				if (param.type == "rgb" || param.type == "hex" || param.type == "color")
 				{

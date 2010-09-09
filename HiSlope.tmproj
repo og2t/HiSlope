@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>currentDocument</key>
-	<string>src/hislope/gui/Output.as</string>
+	<string>src/hislope/gui/FilterPanel.as</string>
 	<key>documents</key>
 	<array>
 		<dict>
@@ -472,30 +472,14 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>9</integer>
+				<integer>32</integer>
 				<key>line</key>
-				<integer>233</integer>
+				<integer>39</integer>
 			</dict>
-			<key>columnSelection</key>
-			<false/>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
 			<key>firstVisibleLine</key>
-			<integer>208</integer>
-			<key>selectFrom</key>
-			<dict>
-				<key>column</key>
-				<integer>3</integer>
-				<key>line</key>
-				<integer>233</integer>
-			</dict>
-			<key>selectTo</key>
-			<dict>
-				<key>column</key>
-				<integer>9</integer>
-				<key>line</key>
-				<integer>233</integer>
-			</dict>
+			<integer>0</integer>
 		</dict>
 		<key>src/hislope/gui/Histogram.as</key>
 		<dict>
@@ -516,9 +500,9 @@
 			<key>caret</key>
 			<dict>
 				<key>column</key>
-				<integer>2</integer>
+				<integer>29</integer>
 				<key>line</key>
-				<integer>71</integer>
+				<integer>37</integer>
 			</dict>
 			<key>firstVisibleColumn</key>
 			<integer>0</integer>
@@ -637,6 +621,8 @@
 	</array>
 	<key>showFileHierarchyDrawer</key>
 	<false/>
+	<key>showFileHierarchyPanel</key>
+	<true/>
 	<key>treeState</key>
 	<dict>
 		<key>HiSlope</key>
@@ -648,6 +634,6 @@
 		</dict>
 	</dict>
 	<key>windowFrame</key>
-	<string>{{10, 62}, {1401, 816}}</string>
+	<string>{{133, 362}, {1401, 816}}</string>
 </dict>
 </plist>
