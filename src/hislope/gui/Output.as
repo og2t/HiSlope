@@ -16,6 +16,7 @@
 	
 	VERSION HISTORY:
 	v0.1	Born on 2009-10-26
+	v0.2	Moved the content into Window
 
 	USAGE:
 
@@ -32,6 +33,7 @@ package hislope.gui
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
 	import hislope.display.MetaBitmapData;
+	import flash.display.DisplayObject;
 	import flash.display.Sprite;
 	import flash.display.Bitmap;
 	import flash.events.Event;
@@ -53,6 +55,8 @@ package hislope.gui
 		private var outputBitmap:Bitmap;
 		private var label:String;
 		
+		private var window:Window;
+		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
 		public function Output(outputBmpData:MetaBitmapData, label:String = "output", stageInit:Boolean = true) 
@@ -73,13 +77,14 @@ package hislope.gui
 			
 			outputBitmap = new Bitmap(outputBmpData);
 			outputBitmap.smoothing = true;
-			addChild(outputBitmap);
 			
-			if (label != "")
-			{
-				outputLabel = new Label(this, 0, 0, label);
-				outputLabel.background = true;
-			}
+			window = new Window(this);
+			window.content.addChild(outputBitmap);
+			window.setSize(outputBitmap.width, outputBitmap.height + 20);
+			window.hasMinimizeButton = true;
+			window.title = label;
+			window.draggable = true;
+			window.shadow = false;
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
