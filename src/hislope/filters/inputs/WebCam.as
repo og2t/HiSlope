@@ -178,7 +178,6 @@ package hislope.filters.inputs
 		
 		public function WebCam(OVERRIDE:Object = null)
 		{
-						
 			init(NAME, PARAMETERS, OVERRIDE, DEBUG_VARS);
 			
 			video = new Video(cameraWidth, cameraHeight);

@@ -83,7 +83,7 @@ package hislope.filters.inputs
 		
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
 		
-		public var position:Number;
+		private var _position:Number;
 		public var bufferLength:Number;
 		public var mirrorMode:Boolean;
 			
@@ -108,7 +108,7 @@ package hislope.filters.inputs
 		private function initVideo(event:Event):void
 		{
 			scale = WIDTH / videoFile.width;
-			updateParams();
+			/*updateParams();*/
 		}
 
 		override public function process(metaBmpData:MetaBitmapData):void
@@ -124,9 +124,6 @@ package hislope.filters.inputs
 		
 		override public function updateParams():void
 		{
-			// current video
-			/*if (videoFile) videoFile.scrub(position);*/
-			
 			matrix.identity();
 
 			if (mirrorMode)
@@ -169,17 +166,30 @@ package hislope.filters.inputs
 		
 		private function render(event:*):void
 		{
-			updateUI("position", videoFile.position);
+			updateUI("position", videoFile.headPosition);
 			
-			/*videoFile.position = position;*/
+			_position = videoFile.headPosition;
 			
 			dispatchEvent(new Event(HiSlopeEvent.INPUT_RENDERED));
 			
 			updateUI("bufferLength", videoFile.bufferLengthPercent);
-			
 		}
 		
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
+		
+		public function set position(value:Number):void
+		{
+			// current video
+			if (videoFile) videoFile.scrub(value);
+		}
+		
+		public function get position():Number
+		{
+			return _position;
+			/*if (videoFile) return videoFile.headPosition;*/
+			/*return 0;*/
+		}
+		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
 	}
 }

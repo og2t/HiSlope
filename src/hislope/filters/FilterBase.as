@@ -107,7 +107,7 @@ package hislope.filters
 			point = rect.topLeft;
 			
 			histogramChannels = 0x7;
-			histogramBmpData = new BitmapData(256, 100, false, 0); 
+			histogramBmpData = new BitmapData(256, 100, false, 0);
 			tempHistogramMap = histogramBmpData.clone();
 		}
 		
@@ -174,6 +174,7 @@ package hislope.filters
 		 */
 		public function process(metaBmpData:MetaBitmapData):void
 		{
+			throw new Error("Error: You must overwrite method process(metaBmpData:MetaBitmapData) in your Filter class.");
 			// this gets overwritten in the subclass 
 		}
 		
@@ -201,7 +202,20 @@ package hislope.filters
 
 		public function updateParams():void
 		{
-			// this needs to be overwritten in the subclass
+			if (!filterPanel) return;
+
+			// check what had changed and update UI accordingly
+			for each (var param:Object in _defaultParams)
+			{
+				if (param.type == "button") continue;
+				
+				if (this[param.name] != param.lastValue)
+				{
+					trace("param changed:", param.name, this[param.name]);
+					param.lastValue = this[param.name];
+					updateUI(param.name, this[param.name])
+				}
+			}
 		}
 		
 		public function resetParams():void
@@ -236,6 +250,9 @@ package hislope.filters
 								
 				trace("\t", param.name + ": " + param.current + " (" + param.type + ")" + " [" + param.min + ", " + param.max + "]");
 			
+				// remember last value
+				param.lastValue = param.current;
+			
 				setParam(param.name, param.current, false);
 				updateUI(param.name, param.current);
 			}
@@ -255,6 +272,16 @@ package hislope.filters
 			
 			rect = region;
 			point = rect.topLeft;
+		}
+		
+		public function randomiseParams():void
+		{
+			if (filterPanel) filterPanel.randomiseParams();
+		}
+		
+		public function randomiseColors():void
+		{
+			if (filterPanel) filterPanel.randomiseParams(true);
 		}
 		
 		public function updateUI(name:String, value:*):void

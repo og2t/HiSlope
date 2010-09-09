@@ -60,6 +60,7 @@ package hislope.gui
 		private var redRadio:RadioButton;
 		private var greenRadio:RadioButton;
 		private var blueRadio:RadioButton;
+		private var alphaRadio:RadioButton;
 		private var rgbRadio:RadioButton;
 		
 		private var activeChannel:int;
@@ -77,7 +78,7 @@ package hislope.gui
 			panel = new Panel(this);
 			panel.name = "H" + filter.name;
 			
-			rgbRadio = new RadioButton(panel, 8, 8, "RGB", true, toggleChannels);
+			rgbRadio = new RadioButton(panel, 8, 8, "RGBA", true, toggleChannels);
 			rgbRadio.name = "7";
 			redRadio = new RadioButton(panel, 8, 22, "R", false, toggleChannels);
 			redRadio.name = "1";
@@ -85,8 +86,10 @@ package hislope.gui
 			greenRadio.name = "2";
 			blueRadio = new RadioButton(panel, 8, 50, "B", false, toggleChannels);
 			blueRadio.name = "4";
+			/*alphaRadio = new RadioButton(panel, 8, 64, "A", false, toggleChannels);*/
+			/*alphaRadio.name = "8";*/
 			
-			position = new Label(panel, 8, 70, "@ --");
+			position = new Label(panel, 8, 80, "@ --");
 						
 			histogramBmp = new Bitmap(filter.histogram);
 			addChild(histogramBmp);
@@ -123,6 +126,7 @@ package hislope.gui
 			redRadio.label = "R";
 			greenRadio.label = "G";
 			blueRadio.label = "B";
+			/*alphaRadio.label = "A";*/
 		}
 		
 		private function getInfo(event:Event):void
@@ -143,10 +147,20 @@ package hislope.gui
 					case 4:
 						blueRadio.label = "B " + filter.histogramData[2][pos];
 						break;
+					case 8:
+						/*alphaRadio.label = "A " + filter.histogramData[3][pos];*/
+						break;
 					case 7:
 						redRadio.label = "R " + filter.histogramData[0][pos];
 						greenRadio.label = "G " + filter.histogramData[1][pos];
 						blueRadio.label = "B " + filter.histogramData[2][pos];
+						break;
+					case 15:
+						redRadio.label = "R " + filter.histogramData[0][pos];
+						greenRadio.label = "G " + filter.histogramData[1][pos];
+						blueRadio.label = "B " + filter.histogramData[2][pos];
+						alphaRadio.label = "A " + filter.histogramData[3][pos];
+						break;
 				}
 				
 			} else {

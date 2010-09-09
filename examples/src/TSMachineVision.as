@@ -86,24 +86,24 @@ package
 			fpsRater.x = 320 + 30;
 			fpsRater.y = 240 + 10;
 
-			/*var inputWC:WebCam = new WebCam();*/
+			var inputWC:WebCam = new WebCam();
 			var inputVP:VideoPlayer = new VideoPlayer();
 			/*inputVP.addVideo("videos/black_or_white_sequence.mov", "B&W Full");*/
 			inputVP.addVideo("videos/black_or_white.mov", "B&W Video");
 			/*inputVP.addVideo("videos/squint.mov", "Squint");*/
 			
 			filterChain.addFilter(inputVP, true);
-			/*filterChain.addFilter(inputWC, false, false, false, false);*/
+			filterChain.addFilter(inputWC, false, false, false, false);
 			
 			inputVP.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
-			/*inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);*/
+			inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
 			
 			filterChain.addFilter(new Levels(), false, false, false, false);
 			filterChain.addFilter(new QuickFaceDetector({interval: 0.1}), false);
 			filterChain.addFilter(new EyeFinder(), true);
 			filterChain.addFilter(new ShapeDepth(), true);
 			filterChain.addFilter(new ColorGrading({colorStart: 0x0, colorMiddle: 0x750000, colorEnd: 0xFFFFFF}));
-			filterChain.addFilter(new MachineVision({radiusDeflation: 1, overlayOpacity: 0.5, triangulation: true, lines: true, blur: 1, linesColor: 0xFF9F00, pointsColor: 0xFFFFFF}));
+			filterChain.addFilter(new MachineVision({radiusDeflation: 1, overlayOpacity: 0.5, points: false, lines: false, fills: true, blur: 1, linesColor: 0xFF9F00, pointsColor: 0xFFFFFF}));
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////

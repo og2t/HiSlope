@@ -1,0 +1,30 @@
+<languageVersion : 1.0;>
+kernel XProcess
+<   
+	namespace: "net.blog2t.filters";
+    vendor: "Tomek Augustyn / Og2t";
+    version: 1;
+    description: "Cross Process";
+>
+{
+    parameter float amount
+    <
+        minValue: float(0.0);
+        maxValue: float(1.0);
+        defaultValue: float(0.2);
+    >;
+    
+    input image4 src;
+    output pixel4 dst;
+
+    void evaluatePixel()
+    {
+        pixel4 p = sampleNearest(src, outCoord());
+        
+        p.r -= sin(6.28 * p.r) * amount / 3.14;
+        p.g -= sin(6.28 * p.g) * amount / 3.14;
+        p.b += sin(6.28 * p.b) * amount / 3.14;
+        
+        dst = p;
+    }
+}

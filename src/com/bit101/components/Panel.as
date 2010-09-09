@@ -73,7 +73,7 @@ package com.bit101.components
 		override protected function addChildren():void
 		{
 			_background = new Shape();
-			addChild(_background);
+			/*addChild(_background);*/
 			
 			_mask = new Sprite();
 			_mask.mouseEnabled = false;

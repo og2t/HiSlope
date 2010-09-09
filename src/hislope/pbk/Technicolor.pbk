@@ -1,0 +1,41 @@
+/*
+    ft-2-strip technicolor
+    Based on The Aviator movie & color process discuss on VFXTalk.com
+    
+    Pixel Bender Shader written by Francois Tarlier
+    http://www.francois-tarlier.com/blog/index.php/2010/05/pixel-bender-ft-2-strip-technicolor-ft-3-strip-technicolor-shader-for-after-effects
+*/
+
+<languageVersion : 1.0;>
+
+kernel Technicolor
+<   
+    namespace : "com.francoistarlier";
+    vendor : "Francois Tarlier";
+    version : 1;
+    description : "2-Strip technicolor "; 
+    displayname: "ft-2-Strip Technicolor";
+    category: "francois-tarlier.com";
+>
+{
+    parameter float amount
+    <
+        minValue: float(0.0);
+        maxValue: float(1.0);
+        defaultValue: float(0.5);
+    >;
+    
+    input image4 src;
+    output pixel4 dst;
+     
+    void evaluatePixel()
+    {
+        float4 color = sampleLinear(src, outCoord());
+        
+        float3 halfColor = color.rgb * amount;
+        dst.r = color.r - halfColor.g + halfColor.b;
+        dst.g = color.g - halfColor.r + halfColor.b;
+        dst.b = color.b - halfColor.r + halfColor.g;
+        dst.a = color.a;
+    }
+}

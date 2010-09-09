@@ -70,6 +70,18 @@ package net.blog2t.util
 			return Math.min(Math.max(0x00, value), 0xff);
 		}
 		
+		private static function brightness(col:uint):Number
+		{
+			var r:int = (col >> 16) & 0xff;
+			var g:int = (col >> 8) & 0xff;
+			var b:int = col & 0xff;
+			
+			/*return (0.299 * r + 0.587 * g + 0.114 * b) / 255;*/
+
+			// HSP is more accurate, using weighted 3D space:
+			return Math.sqrt(0.241 * Math.pow(r, 2) + 0.691 * Math.pow(g, 2) + 0.068 * Math.pow(b, 2)) / 255;
+		}
+		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
 		
 		public static function getR(color:uint):uint

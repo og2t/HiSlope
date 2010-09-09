@@ -1,0 +1,41 @@
+<languageVersion: 1.0;>
+
+kernel ChromaKey
+<   namespace: "info.kynd";
+    vendor: "kynd.info";
+    version: 1;
+    description: "makes specified range of colors transparent";
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float4 keyColor
+    <
+        minValue: float4(0.0, 0.0, 0.0, 0.0);
+        maxValue: float4(1.0, 1.0, 1.0, 1.0);
+        defaultValue: float4(0.0, 0.0, 0.0, 1.0);
+        description: "color that is used for keying";
+    >;
+
+    parameter float range
+    <
+        minValue: 0.0;
+        maxValue: 1.0;
+        defaultValue: 0.0;
+        description: "range of color that the filter is applied";
+    >;
+
+    void evaluatePixel()
+    {
+        float4 color = sampleNearest(src, outCoord());
+        float dist = distance(color, keyColor);
+
+        dst = color;
+        
+        if (dist <= range)
+        {
+            dst.a = 0.0;
+        }
+    }
+}

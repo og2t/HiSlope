@@ -78,14 +78,19 @@ package hislope.filters.visuals
 				max: 1,
 				type: "number"
 			}, {
-				name: "triangulation",
-				label: "Triangulation",
-				current: false,
+				name: "points",
+				label: "Show points",
+				current: true,
 				type: "boolean"
 			}, {
 				name: "lines",
 				label: "Show lines",
 				current: true,
+				type: "boolean"
+			}, {
+				name: "fills",
+				label: "Show fills",
+				current: false,
 				type: "boolean"
 			}, {
 				name: "blur",
@@ -122,8 +127,9 @@ package hislope.filters.visuals
 		
 		public var radiusDeflation:Number;
 		public var overlayOpacity:Number;
-		public var triangulation:Boolean;
+		public var points:Boolean;
 		public var lines:Boolean;
+		public var fills:Boolean;
 		public var blur:Number;
 		public var linesColor:uint;
 		public var pointsColor:uint
@@ -168,17 +174,20 @@ package hislope.filters.visuals
 				if (distance < spotlight.radius) pts.push(pt);
 			}
 			
-			outline.graphics.lineStyle(1, linesColor, 0.25);
+			if (lines) outline.graphics.lineStyle(1, linesColor, 0.25);
+			else outline.graphics.lineStyle(0, 0, 0);
 			
-			if (triangulation || lines)
+			if (lines || fills || points)
 			{
 				var delaunay:Array = Delaunay.Triangulate(pts);
 
-				if (lines)
+				if (lines || fills)
 				{
 					for (var i:int = 0; i < delaunay.length; i++)
 					{
 						var t:Triangle = (delaunay[i] as Triangle);
+						t.getCenter();
+						outline.graphics.beginFill(metaBmpData.getPixel(t.center.x, t.center.y));
 						outline.graphics.moveTo(t.p1.X, t.p1.Y);
 						outline.graphics.lineTo(t.p2.X, t.p2.Y);
 						outline.graphics.lineTo(t.p3.X, t.p3.Y);
@@ -186,25 +195,25 @@ package hislope.filters.visuals
 					}
 				}
 				
-				if (triangulation)
-				{
-					outline.graphics.lineStyle(0, centersColor, 0.75);
-					Voronoi.draw(delaunay, outline);
-				}
+				if (points) outline.graphics.lineStyle(0, centersColor, 0.75);
+				Voronoi.draw(delaunay, outline, points);
 			}
 			
 			outline.graphics.lineStyle(0, pointsColor, 0.75);
-			
-			for each (pt in pts)
+
+			if (points)
 			{
-				outline.graphics.drawCircle(pt.X, pt.Y, 0.5);
+				for each (pt in pts)
+				{
+					outline.graphics.drawCircle(pt.X, pt.Y, 0.5);
+				}
 			}
 			
 			if (metaBmpData.eyes)
 			{
 				for each (var eyeRect:Rectangle in metaBmpData.eyes)
 				{
-					outline.graphics.drawCircle(eyeRect.x + eyeRect.width / 2, eyeRect.y + eyeRect.height / 2, (eyeRect.width + eyeRect.height) * 0.3);
+					/*outline.graphics.drawCircle(eyeRect.x + eyeRect.width / 2, eyeRect.y + eyeRect.height / 2, (eyeRect.width + eyeRect.height) * 0.3);*/
 				}
 			}
 			

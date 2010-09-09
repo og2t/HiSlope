@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
 
-	[AS3] FilterName
+	[AS3] Pencil
 	=======================================================================================
 
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
@@ -13,7 +13,7 @@
 	You may NOT charge anything for this source code.
 	This notice and the copyright information must be left intact in any distribution of this source code. 
 	You are encouraged to release any improvements back to the ActionScript community.
-
+	
 	VERSION HISTORY:
 	v0.1	Born on 09/07/2009
 
@@ -27,82 +27,98 @@
 
 ---------------------------------------------------------------------------------------------*/
 
-package hislope.filters // filter path
+package hislope.filters.pixelbender.fx
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
 	import hislope.display.MetaBitmapData;
+	import flash.events.Event;
+	import flash.display.BitmapData;
+	import flash.display.Shader;
+	import net.blog2t.util.ColorUtils;
 	import hislope.filters.FilterBase;
+	import flash.filters.ShaderFilter;
+	import flash.utils.ByteArray;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	public class FilterName extends FilterBase
+	public class Pencil extends FilterBase
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
-		private static const NAME:String = "Filter Name";
+		private static const NAME:String = "Pencil";
 		private static const PARAMETERS:Array = [
 			{
-				name: "param1",
-				label: "param 1",
-				current: 0.1,
-				min: 0,
-				max: 1,
+				name: "n0",
+				current: 97.0,
+				max: 100,
 				type: "number"
 			}, {
-				name: "param2",
-				label: "param 2",
-				current: 1,
-				min: 0,
-				max: 255,
-				type: "int"
+				name: "n1",
+				current: 15.0,
+				max: 100,
+				type: "number"
+			}, {
+				name: "n2",
+				current: 97.0,
+				max: 100,
+				type: "number"
+			}, {
+				name: "n3",
+				current: 9.7,
+				max: 10,
+				type: "number"
 			}
 		];
-		
-		private static const DEBUG_VARS:Array = [
-			"time",
-			"frames"
-		];
 
-		// MEMBERS ////////////////////////////////////////////////////////////////////////////
-	
-		public var time:Number;
-		public var frames:Number;
-	
-		// PARAMETERS /////////////////////////////////////////////////////////////////////////
+		[Embed("../../../pbj/Pencil.pbj", mimeType="application/octet-stream")]
+		private const pbjFile:Class;
 		
-		public var param1:Number;
-		public var param2:int;
-			
+		// MEMBERS ////////////////////////////////////////////////////////////////////////////
+
+		private var shaderFilter:ShaderFilter;
+		private var shader:Shader;
+
+		// PARAMETERS /////////////////////////////////////////////////////////////////////////
+
+		public var n0:Number;
+		public var n1:Number;
+		public var n2:Number;
+		public var n3:Number;
+	
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function FilterName(OVERRIDEN:Object = null)
+		public function Pencil(OVERRIDE:Object = null)
 		{
-			// init your bitmaps, variables, etc. here
+			shader = new Shader(new pbjFile() as ByteArray);
+           	shaderFilter = new ShaderFilter(shader);
+
+			/*detectKernelParams(shader, PARAMETERS);*/
 			
-			time = 0;
-			frames = 0;
-			
-			init(NAME, PARAMETERS, OVERRIDEN, DEBUG_VARS);
+			init(NAME, PARAMETERS, OVERRIDE);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
-			// do operations
-			
-			time += param1;
-			frames += param2;
-			
+			metaBmpData.applyFilter(metaBmpData, rect, point, shaderFilter);
+
 			getPreviewFor(metaBmpData);
 		}
 		
+		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
+		
 		override public function updateParams():void
 		{
-			// update parameters if changed
+			shader.data.n0.value = [n0];
+			shader.data.n1.value = [n1];
+			shader.data.n2.value = [n2];
+			shader.data.n3.value = [n3];
 		}
 		
-		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
+		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
+		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
+		// HELPERS ////////////////////////////////////////////////////////////////////////////
 	}
 }

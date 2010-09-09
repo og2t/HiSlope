@@ -78,7 +78,7 @@ package hislope.controllers
 		private var fps:Number;
 		private var loop:Boolean;
 		private var duration:Number;
-		public var position:Number;
+		public var headPosition:Number;
 		
 		private var _width:Number;
 		private var _height:Number;
@@ -238,7 +238,7 @@ package hislope.controllers
 			
 			dispatchEvent(new Event(Event.CHANGE));
 			
-			position = stream.time / duration;
+			headPosition = stream.time / duration;
 		}
 
 		private function onMetaData(metadata:Object):void

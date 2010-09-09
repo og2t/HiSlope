@@ -124,17 +124,17 @@ package hislope.filters.detectors
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 
-		private function detectionHandler(e:ObjectDetectorEvent):void
+		private function detectionHandler(event:ObjectDetectorEvent):void
 		{
 			var g:Graphics = faceRectContainer.graphics;
 			
 			g.clear();
 			
-			if (e.rects)
+			if (event.rects)
 			{
 				g.lineStyle(1, 0x00ff00, 0.5);
-				e.rects.forEach(
-					function(r:Rectangle, idx:int, arr:Array):void
+				event.rects.forEach(
+					function (r:Rectangle, idx:int, arr:Array):void
 					{
 						g.drawRect(r.x, r.y, r.width, r.height);
 						motionRect = new Rectangle(r.x * scaleFactor, r.y * scaleFactor, r.width * scaleFactor, r.height * scaleFactor);

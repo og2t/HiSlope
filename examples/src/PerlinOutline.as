@@ -45,7 +45,9 @@ package
 	import hislope.filters.FilterBase;
 	import hislope.filters.pixelbender.Levels;
 	import hislope.filters.pixelbender.fx.LittlePlanet;
+	import hislope.filters.pixelbender.fx.RGBTone;
 	import hislope.filters.color.ColorGrading;
+	import hislope.filters.color.HSBC;
 
 	import hislope.display.MetaBitmapData;
 	import hislope.events.HiSlopeEvent;
@@ -85,23 +87,25 @@ package
 			fpsRater.x = 320 + 30;
 			fpsRater.y = 240 + 10;
 
-			var inputWC:WebCam = new WebCam();
+			/*var inputWC:WebCam = new WebCam();
 			var inputVP:VideoPlayer = new VideoPlayer();
-			inputVP.addVideo("videos/black_or_white.mov", "B&W Video");
+			inputVP.addVideo("videos/black_or_white.mov", "B&W Video");*/
 			
 			var inputPN:PerlinNoise = new PerlinNoise();
 			filterChain.addFilter(inputPN, true);
-			filterChain.addFilter(inputVP, false, false, false, false);
-			filterChain.addFilter(inputWC, false, false, false, false);
+			/*filterChain.addFilter(inputVP, false, false, false, false);
+			filterChain.addFilter(inputWC, false, false, false, false);*/
 			
 			inputPN.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
-			inputVP.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
-			inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			/*inputVP.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);
+			inputWC.addEventListener(HiSlopeEvent.INPUT_RENDERED, render, false, 0, true);*/
 			
-			filterChain.addFilter(new Levels(), false);
-			filterChain.addFilter(new LittlePlanet(), false, false, false, false);
+			/*filterChain.addFilter(new Levels(), false);*/
+			filterChain.addFilter(new HSBC(), false);
+			/*filterChain.addFilter(new LittlePlanet(), false, false, false, false);*/
 			filterChain.addFilter(new PosterizeOutline());
-			filterChain.addFilter(new ColorGrading());
+			/*filterChain.addFilter(new ColorGrading());*/
+			/*filterChain.addFilter(new RGBTone(), false, false, false, false);*/
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
