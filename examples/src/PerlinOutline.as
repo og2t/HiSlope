@@ -45,7 +45,7 @@ package
 	import hislope.filters.FilterBase;
 	import hislope.filters.pixelbender.Levels;
 	import hislope.filters.pixelbender.fx.LittlePlanet;
-	import hislope.filters.pixelbender.fx.RGBTone;
+	/*import hislope.filters.pixelbender.fx.RGBTone;*/
 	import hislope.filters.color.ColorGrading;
 	import hislope.filters.color.HSBC;
 
