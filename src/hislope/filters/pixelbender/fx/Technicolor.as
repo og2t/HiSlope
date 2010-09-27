@@ -6,7 +6,7 @@
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
 	http://play.blog2t.net/hislope
 
-	You are free to use this source code in any project. 
+	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
 	You are free to distribute this source code.
 
@@ -53,7 +53,7 @@ package hislope.filters.pixelbender.fx
 			}
 		];
 
-		[Embed("../../../pbj/Technicolor.pbj", mimeType="application/octet-stream")]
+		[Embed("../../../pbj/fx/Technicolor.pbj", mimeType="application/octet-stream")]
 		private const pbjFile:Class;
 		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////

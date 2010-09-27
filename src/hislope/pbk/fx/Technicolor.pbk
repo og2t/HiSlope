@@ -31,8 +31,8 @@ kernel Technicolor
     void evaluatePixel()
     {
         float4 color = sampleLinear(src, outCoord());
-        
         float3 halfColor = color.rgb * amount;
+
         dst.r = color.r - halfColor.g + halfColor.b;
         dst.g = color.g - halfColor.r + halfColor.b;
         dst.b = color.b - halfColor.r + halfColor.g;

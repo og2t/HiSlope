@@ -39,6 +39,8 @@ package com.bit101.components
 	import flash.display.StageAlign;
 	import flash.display.StageScaleMode;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.events.KeyboardEvent;
 	import flash.filters.DropShadowFilter;
 
 	public class Component extends Sprite
@@ -58,6 +60,7 @@ package com.bit101.components
 		protected var _height:Number = 0;
 		
 		public static const DRAW:String = "draw";
+		public static var current:*;
 
 		/**
 		 * Constructor
@@ -82,6 +85,8 @@ package com.bit101.components
 		{
 			addChildren();
 			invalidate();
+			
+			addEventListener(MouseEvent.MOUSE_DOWN, addKeyListener, false, 0, true);
 		}
 		
 		/**
@@ -174,8 +179,24 @@ package com.bit101.components
 			draw();
 		}
 		
+		private function addKeyListener(event:MouseEvent):void
+		{
+			if (this is HUISlider) Component.current = this;
+			if (stage) stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown, false, 0, true);
+		}
 		
-		
+		protected function onKeyDown(event:KeyboardEvent):void
+		{
+			if (!Component.current) return;
+			
+			switch (event.keyCode)
+			{
+				case 37: if ("onKeyLeft" in Component.current) Component.current.onKeyLeft();
+				break;
+				case 39: if ("onKeyRight" in Component.current) Component.current.onKeyRight();
+				break;
+			}
+		}
 		
 		///////////////////////////////////
 		// getter/setters

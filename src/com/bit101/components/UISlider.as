@@ -68,6 +68,18 @@ package com.bit101.components
 			formatValueLabel();
 		}
 		
+		public function onKeyRight():void
+		{
+			value += _tick;
+			onSliderChange();
+		}
+		
+		public function onKeyLeft():void
+		{
+			value -= _tick;
+			onSliderChange();
+		}
+		
 		/**
 		 * Creates and adds the child display objects of this component.
 		 */
@@ -141,7 +153,7 @@ package com.bit101.components
 		override public function draw():void
 		{
 			super.draw();
-			_label.text = _labelText
+			_label.text = _labelText;
 			_label.draw();
 			formatValueLabel();
 		}
@@ -168,7 +180,7 @@ package com.bit101.components
 		 * Handler called when the slider's value changes.
 		 * @param event The Event passed by the slider.
 		 */
-		protected function onSliderChange(event:Event):void
+		protected function onSliderChange(event:Event = null):void
 		{
 			formatValueLabel();
 			dispatchEvent(new Event(Event.CHANGE));

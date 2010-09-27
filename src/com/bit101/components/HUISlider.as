@@ -65,9 +65,6 @@ package com.bit101.components
 			_valueLabel.x = _slider.x + _slider.width + 5;
 		}
 		
-		
-		
-		
 		///////////////////////////////////
 		// public methods
 		///////////////////////////////////

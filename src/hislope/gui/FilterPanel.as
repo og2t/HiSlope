@@ -6,7 +6,7 @@
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
 	http://play.blog2t.net/hislope
 
-	You are free to use this source code in any project. 
+	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
 	You are free to distribute this source code.
 
@@ -48,6 +48,7 @@ package hislope.gui
 	import flash.desktop.Clipboard;
 	import flash.desktop.ClipboardFormats;
 	import com.bit101.components.*;
+	import hislope.core.FilterChain;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
@@ -75,6 +76,8 @@ package hislope.gui
 
 		private var window:Window;
 		private var windowMask:Sprite = new Sprite();
+		
+		private var line:Shape = new Shape();
 
 		private var totalHeight:int;
 		private var vbox:VBox;
@@ -85,12 +88,14 @@ package hislope.gui
 	
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function FilterPanel(filter:FilterBase, stageInit:Boolean = true) 
+		public function FilterPanel(filter:FilterBase, previewScale:Number = 1.0) 
 		{
 			this.filter = filter;
 			filter.panel = this;
+			filter.previewScale = previewScale;
 
 			previewBmp = new Bitmap(filter.preview);
+			/*addEventListener(MouseEvent.MOUSE_MOVE, mouseMove, false, 0, true);*/
 			
 			histogram = new Histogram(filter);
 			histogram.addEventListener(Histogram.CHANGE_CHANNELS, histogramChannelsChange, false, 0, true);
@@ -111,6 +116,8 @@ package hislope.gui
 
 			var offsetY:int = 0;
 			
+			window.addEventListener(MouseEvent.MOUSE_DOWN, panelClicked, false, 0, true);
+			
 			//FIXME try to do it before resetParams is called, as it does virtually the same
 
 			for each (var param:Object in filter.params)
@@ -126,7 +133,7 @@ package hislope.gui
 				}
 				
 				var decimalPoints:int = 0;
-				var tick:Number = 0.01;
+				var tick:Number = 1;
 				
 				trace("________", param.name + " (" + param.type + "): " + param.current);
 				
@@ -134,6 +141,7 @@ package hislope.gui
 				{
 					decimalPoints = 2;
 					if (param.step != undefined) tick = param.step;
+					else tick = 0.1;
 				}
 
 				if (param.label == undefined) param.label = param.name;
@@ -225,11 +233,8 @@ package hislope.gui
 			
 			vbox.addChild(previewBmp);
 			vbox.addChild(histogram);
-			
-			var line:Shape = new Shape();
-			line.graphics.lineStyle(0, 0xffffff, 1);
-			line.graphics.moveTo(0, 0);
-			line.graphics.lineTo(320, 0);
+
+			drawPanel(0xFFFFFF, 0x000000);
 			window.addChild(line);
 
 			updateParamsVisible();
@@ -237,8 +242,6 @@ package hislope.gui
 			//updateFilterEnabled();
 
 			updatePositions();
-			
-			if (stageInit) addEventListener(Event.ADDED_TO_STAGE, init, false, 0, true);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
@@ -249,11 +252,6 @@ package hislope.gui
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
-		
-		public function init(event:Event = null):void
-		{
-			removeEventListener(Event.ADDED_TO_STAGE, init);
-		}
 		
 		public function updateUI(name:String, value:*):void
 		{
@@ -283,7 +281,27 @@ package hislope.gui
 			dispatchEvent(new Event(FilterPanel.CHANGE_SIZE));
 		}
 		
+		/*private function mouseMove(event:MouseEvent):void
+		{
+			trace(filter, event.currentTarget.x, event.currentTarget.y);
+		}*/
+		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
+		
+		private function panelClicked(event:MouseEvent):void
+		{
+			FilterChain.currentPanel = this;
+		}
+
+		public function selectPanel():void
+		{
+			drawPanel(0xFF0000, 0x550000);
+		}
+		
+		public function deselectPanel():void
+		{
+			FilterChain.currentPanel.drawPanel(0xFFFFFF, 0x000000);
+		}
 
 		private function onRandomise(event:MouseEvent):void
 		{
@@ -354,6 +372,11 @@ package hislope.gui
 			updatePositions();
 		}
 		
+		public function get previewVisible():Boolean
+		{
+			return previewBmp.visible;
+		}
+		
 		public function set paramsVisible(state:Boolean):void
 		{
 			window.minimized = !state;
@@ -366,6 +389,11 @@ package hislope.gui
 			updatePositions();
 		}
 		
+		public function get histogramVisible():Boolean
+		{
+			return filter.generateHistogram;
+		}
+		
 		public function set filterEnabled(value:Boolean):void
 		{	
 			trace(this, "filterEnabled", value);
@@ -376,6 +404,11 @@ package hislope.gui
 			if (value) filter.addEventListener(FilterBase.PROCESSED, render, false, 0, true);
 			else filter.removeEventListener(FilterBase.PROCESSED, render);
 		}
+		
+		public function get filterEnabled():Boolean
+		{
+			return filter.enabled;
+		}
 			
 		override public function get height():Number
 		{
@@ -383,6 +416,26 @@ package hislope.gui
 		}
 		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
+		
+		public function drawPanel(lineColor:uint, backgroundColor:uint):void
+		{
+			line.graphics.clear();
+			line.graphics.lineStyle(0, lineColor, 1);
+			line.graphics.moveTo(0, 0);
+			line.graphics.lineTo(320, 0);
+			
+			window.color = backgroundColor;
+		}
+		
+		public function showParams():void
+		{
+			window.minimized = false;
+		}
+		
+		public function hideParams():void
+		{
+			window.minimized = true;
+		}
 		
 		private function resetParams(event:Event):void
 		{
@@ -420,9 +473,18 @@ package hislope.gui
 
 			for each (var param:Object in filter.params)
 			{
+				trace(param.name, param.type);
+				
 				if (param.type == "button") continue;
 				
-				var object:String = param.name + ": " + filter.getParamValue(param.name).toFixed(3);
+				var object:String;
+				
+				if (param.type != "boolean")
+				{
+					object = param.name + ": " + filter.getParamValue(param.name).toFixed(3);
+				} else {
+					object = param.name + ": " + filter.getParamValue(param.name);
+				}
 				
 				if (param.type == "rgb" || param.type == "hex" || param.type == "color")
 				{

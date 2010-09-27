@@ -1,0 +1,223 @@
+<languageVersion: 1.0;>
+
+kernel Pins
+<
+	namespace: "com.rocketmandevelopment";
+	vendor: "Rocketman Development";
+	version: 1;
+	description: "Fast Metaballs";
+>
+{
+	parameter float2 cutOff
+	<
+	minValue: float2(0,0);
+	maxValue: float2(1,1);
+	defaultValue: float2(0.0, 1.0);
+	>;
+    
+	parameter float divider
+	<
+	minValue: float(5.0);
+	maxValue: float(20.0);
+	defaultValue: float(5.0);
+	>;
+
+	parameter float3 ball1
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,1.0);
+	defaultValue:float3(50.0,150.0,1.0);
+	description: "ball1: x, y, radius";
+	>;
+
+	parameter float3 ball2
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,1.0);
+	defaultValue:float3(100.0,100.0,1.0);
+	description: "ball2: x, y, radius";
+	>;
+
+	parameter float3 ball3
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,1.0);
+	defaultValue:float3(200.0,200.0,1.0);
+	description: "ball3: x, y, radius";
+	>;
+
+	parameter float3 ball4
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,1.0);
+	defaultValue:float3(400.0,300.0,1.0);
+	description: "ball4: x, y, radius";
+	>;
+
+	parameter float3 ball5
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,1.0);
+	defaultValue:float3(300.0,250.0,1.0);
+	description: "ball5: x, y, radius";
+	>;
+
+	#if !AIF_FLASH_TARGET
+
+		parameter float2 size
+		<
+		minValue: float2(0, 0);
+		maxValue: float2(1024, 1024);
+		defaultValue: float2(640.0, 480.0);
+		>;
+
+		region generated()
+		{
+			return region(float4(0, 0, size.x, size.y));
+		}
+
+	#endif
+
+	output pixel4 dst;
+
+	void evaluatePixel()
+	{
+		float2 coord = outCoord();
+
+		float sumB = 0.0;
+        float sum = 0.0;
+        
+        float2 dist1 = ball1.xy - coord.xy;
+        float2 dist2 = ball2.xy - coord.xy;
+        float2 dist3 = ball3.xy - coord.xy;
+        float2 dist4 = ball4.xy - coord.xy;
+        float2 dist5 = ball5.xy - coord.xy;
+        sum += cos(atan(dist1.y, dist1.x) / 2.0) * ball1.z;
+        sum += cos(atan(dist2.y, dist2.x) / 2.0) * ball2.z;
+        sum += cos(atan(dist3.y, dist3.x) / 2.0) * ball3.z;
+        sum += cos(atan(dist4.y, dist4.x) / 2.0) * ball4.z;
+        sum += cos(atan(dist5.y, dist5.x) / 2.0) * ball5.z;	
+ 
+        //sum += ball1.z / distance(ball1.xy, coord);
+        //sum += ball2.z / distance(ball2.xy, coord);
+		//sum += ball3.z / distance(ball3.xy, coord);
+		//sum += ball4.z / distance(ball4.xy, coord);
+		//sum += ball5.z / distance(ball5.xy, coord);
+
+        //sum = pow(sum / 5.0, divider);
+		sum= (sum / divider - cutOff[0]) / (cutOff[1] - cutOff[0]);
+        sumB= (sumB / divider - cutOff[0]) / (cutOff[1] - cutOff[0]);
+        //sum= (sum / divider - cutOff[0]) / (cutOff[1] - cutOff[0]);
+		
+        dst.rgba = float4(sum, sum, sum, 1);
+	}
+}
+
+
+/* Shader:
+
+parameter "_OutCoord", float2, f0.rg, in
+
+texture  "src", t0
+
+parameter "dst", float4, f1, out
+
+parameter "size", float2, f2.rg, in
+meta  "defaultValue", 512, 512
+meta  "minValue", 0, 0
+meta  "maxValue", 512, 512
+
+parameter "exponent", float, f4.r, in ; cutoff
+meta  "defaultValue", 10
+meta  "minValue", 0
+meta  "maxValue", 100
+
+parameter "center1", float3, f5.rgb, in ; x, y, size
+meta  "defaultValue", 150, 160, 10160
+meta  "minValue", 0, 0, 0
+meta  "maxValue", 1, 1, 40000
+
+parameter "center2", float3, f6.rgb, in
+meta  "defaultValue", 100, 400, 11160
+meta  "minValue", 0, 0, 0
+meta  "maxValue", 1, 1, 40000
+
+parameter "center3", float3, f7.rgb, in
+meta  "defaultValue", 400, 50, 11160
+meta  "minValue", 0, 0, 0
+meta  "maxValue", 1, 1, 40000
+
+;----------------------------------------------------------
+
+set f1.rgb, 0
+
+//1
+mov f3.ba, f5.rg
+sub f3.ba, f0.rg
+mul f3.ba, f3.ba
+add f3.a, f3.b
+mov f3.b, f5.b
+div f3.b, f3.a
+add f1.r, f3.b
+
+//2
+mov f3.ba, f6.rg
+sub f3.ba, f0.rg
+mul f3.ba, f3.ba
+add f3.a, f3.b
+mov f3.b, f6.b
+div f3.b, f3.a
+add f1.r, f3.b
+
+//3
+mov f3.ba, f7.rg
+sub f3.ba, f0.rg
+mul f3.ba, f3.ba
+add f3.a, f3.b
+mov f3.b, f7.b
+div f3.b, f3.a
+add f1.r, f3.b
+
+pow f1.r, f4.r
+mov f1.g, f1.r
+mov f1.b, f1.r
+
+set f1.a, 1
+
+
+set dst.rgb, 0
+
+//1
+mov f3.ba, center1.rg
+sub f3.ba, outCoord.rg
+mul f3.ba, f3.ba
+add f3.a, f3.b
+mov f3.b, center1.b
+div f3.b, f3.a
+add dst.r, f3.b
+
+//2
+mov f3.ba, center2.rg
+sub f3.ba, outCoord.rg
+mul f3.ba, f3.ba
+add f3.a, f3.b
+mov f3.b, center2.b
+div f3.b, f3.a
+add dst.r, f3.b
+
+//3
+mov f3.ba, center3.rg
+sub f3.ba, outCoord.rg
+mul f3.ba, f3.ba
+add f3.a, f3.b
+mov f3.b, center3.b
+div f3.b, f3.a
+add dst.r, f3.b
+
+pow dst.r, exponent.r
+mov dst.g, dst.r
+mov dst.b, dst.r
+
+set dst.a, 1
+
+*/

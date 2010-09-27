@@ -6,7 +6,7 @@
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
 	http://play.blog2t.net/hislope
 
-	You are free to use this source code in any project. 
+	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
 	You are free to distribute this source code.
 
@@ -21,7 +21,7 @@
 
 	TODOs:
 	
-	TODO: separate GUI from model 
+	TODO: separate GUI from the model 
 
 	DEV IDEAS:
 
@@ -45,13 +45,18 @@ package hislope.core
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import flash.events.MouseEvent;
+	import flash.events.KeyboardEvent;
 	import flash.utils.getTimer;
+	import flash.geom.Rectangle;
 	
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 		
     public class FilterChain extends Sprite
     {
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
+		
+		public static var _currentPanel:FilterPanel = null;
 		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 		
@@ -70,6 +75,8 @@ package hislope.core
 		private var info:Label;
 		private var fitPreview:Boolean;
 		
+		public var previewScale:Number = 1.0;
+		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 
         public function FilterChain(
@@ -77,15 +84,17 @@ package hislope.core
 			processingWidth:int = 320,
 			processingHeight:int = 240,
 			debug:Boolean = true,
-			fitPreview:Boolean = true
+			fitPreview:Boolean = true,
+			sizeY:int = 600
 		) {
 			this.name = name;
+			this.sizeY = sizeY;
 			
 			FilterBase.WIDTH = processingWidth;
 			FilterBase.HEIGHT = processingHeight;
 			
 			//TODO make sure preview is smaller than 320x240 when bigger
-			if (fitPreview) FilterBase.PREVIEW_SCALE = FilterBase.PREVIEW_WIDTH / processingWidth;
+			if (fitPreview) previewScale = FilterBase.PREVIEW_WIDTH / processingWidth;
 
             debugMode = debug;
 			
@@ -106,7 +115,7 @@ package hislope.core
 
 			if (debugMode)
 			{
-				filterPanel = new FilterPanel(filter);
+				filterPanel = new FilterPanel(filter, previewScale);
 				panelsHolder.addChild(filterPanel);
 				filterPanelsArray.push(filterPanel);
 				filterPanel.addEventListener(FilterPanel.CHANGE_SIZE, renderPanels);
@@ -139,7 +148,12 @@ package hislope.core
 				offsetY += filterPanel.height;
 			}
 			
-			//vSlider.visible = (offsetY > sizeY); 
+			vSlider.visible = (offsetY > sizeY);
+			if (!vSlider.visible)
+			{
+				panelsHolder.y = 0;
+				vSlider.value = 1;
+			}
 			
 			// fill background
 			
@@ -172,6 +186,8 @@ package hislope.core
 			var filterTime:Number;
             var filter:FilterBase;
 
+			metaBmpData.resetROI();
+
 			if (!debugMode)
             {
                 do {
@@ -202,15 +218,15 @@ package hislope.core
 
 		private function init(event:Event = null):void
 		{
-			sizeY = stage.stageHeight;
-
 			vSlider = new VSlider(this, 320, 0, scrollPanels);
 			vSlider.setSize(10, sizeY);
 			vSlider.minimum = 0;
 			vSlider.maximum = 1;
-			vSlider.tick = 0.01;
 			vSlider.value = 1;
+			vSlider.tick = 0.01;
 			vSlider.backClick = true;
+			
+			stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseWheel, false, 0, true);
 		
 			panelsMask.graphics.beginFill(0x00ff00, 0.25);
 			panelsMask.graphics.drawRect(0, 0, 320, sizeY);
@@ -219,9 +235,13 @@ package hislope.core
 			panelsHolder.mask = panelsMask;
 
 			addChild(panelsHolder);
-			info = new Label(panelsHolder, 10, 0, "Filter Chain");
 			
 			setStyles();
+			
+			info = new Label(panelsHolder, 10, 0, "Filter Chain");
+			stage.addEventListener(KeyboardEvent.KEY_UP, keyDown, false, 0, true);
+			
+			stage.stageFocusRect = false;
 		}
 
 		private function scrollPanels(event:Event = null):void
@@ -238,7 +258,7 @@ package hislope.core
 		{
 			var diff:Number = scrollPosDest - scrollPos; 
 			
-			scrollPos += diff * 0.7;
+			scrollPos += diff * 0.3;
 			
 			if (Math.abs(diff) < 0.1)
 			{
@@ -247,6 +267,12 @@ package hislope.core
 			}
 			
 			panelsHolder.y = int(scrollPos);
+		}
+		
+		private function mouseWheel(event:MouseEvent):void
+		{
+			vSlider.value += event.delta * 0.001;
+			scrollPanels();
 		}
 
 		public function get debug():Boolean
@@ -258,19 +284,106 @@ package hislope.core
 		{
 			debugMode = value;
 		}
-
+		
+		public static function set currentPanel(value:FilterPanel):void
+		{
+			if (_currentPanel) _currentPanel.deselectPanel();
+			_currentPanel = value;
+			_currentPanel.selectPanel();
+		}
+		
+		public static function get currentPanel():FilterPanel
+		{
+			return _currentPanel;
+		}
+		
+		private function nextPanel():void
+		{
+			var currentIndex:int = filterPanelsArray.indexOf(_currentPanel);
+			if (currentIndex < filterPanelsArray.length - 1) currentIndex++;
+			currentPanel = filterPanelsArray[currentIndex];
+		}
+		
+		private function prevPanel():void
+		{
+			var currentIndex:int = filterPanelsArray.indexOf(_currentPanel);
+			if (currentIndex > 0) currentIndex--;
+			currentPanel = filterPanelsArray[currentIndex];
+		}
+		
 		private function setStyles():void
 		{
 			Style.BACKGROUND = 0x880000;
 			Style.HANDLE_FACE = 0xFFFFFF;
 			Style.BUTTON_FACE = 0x000000;
-			Style.INPUT_TEXT = 0x333333;
+			Style.INPUT_TEXT = 0xFFFFFF;
 			Style.LABEL_TEXT = 0xFFFFFF;
 			Style.LABEL_BACKGROUND = 0x000000;
 			Style.DROPSHADOW = 0x000000;
 			Style.PANEL = 0x000000;
 			Style.PROGRESS_BAR = 0xFFFFFF;
 		}
+		
+		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
+		
+		private function keyDown(event:KeyboardEvent):void
+		{
+			/*trace("key", event.keyCode);*/
+			
+			switch (event.keyCode)
+			{
+				case 38:
+					if (!event.altKey)
+					{
+						prevPanel();
+					} else {
+						vSlider.value += 0.1;
+						scrollPanels();
+					}
+				break;
+				
+				case 40:
+					if (!event.altKey)
+					{
+						nextPanel();
+					} else {
+						vSlider.value -= 0.1;
+						scrollPanels();
+					}
+				break;
+				
+				case 32:
+					this.visible = !this.visible;
+				break;
+			}
+			
+			if (!currentPanel) return;
+			
+			switch (event.keyCode)
+			{
+				case 79:
+					currentPanel.filterEnabled = !currentPanel.filterEnabled;
+				break;
+				
+				case 80:
+					currentPanel.previewVisible = !currentPanel.previewVisible;
+				break;
+				
+				case 72:
+					currentPanel.histogramVisible = !currentPanel.histogramVisible;
+				break;
+				
+				case 37:
+					if (!event.altKey) currentPanel.hideParams();
+				break;
+				
+				case 39:
+					if (!event.altKey) currentPanel.showParams();
+				break;
+			}
+		}
+		
+		// HELPERS ////////////////////////////////////////////////////////////////////////////
 
         override public function toString():String
         {

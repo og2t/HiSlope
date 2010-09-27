@@ -94,6 +94,7 @@ package com.bit101.components
 			_handle = new Sprite();
 			_handle.filters = [getShadow(1)];
 			_handle.addEventListener(MouseEvent.MOUSE_DOWN, onDrag);
+			/*addEventListener(MouseEvent.MOUSE_WHEEL, onWheel);*/
 			_handle.buttonMode = true;
 			_handle.useHandCursor = true;
 			addChild(_handle);
@@ -132,7 +133,7 @@ package com.bit101.components
 			}
 			else
 			{
-				_handle.graphics.drawRect(1, 1, _width - 2, _width - 2);
+				_handle.graphics.drawRect(1, 1, _width - 2, (_width - 2) * 1);
 			}
 			_handle.graphics.endFill();
 			positionHandle();
@@ -235,6 +236,11 @@ package com.bit101.components
 			
 		}
 		
+		/*private function onWheel(event:MouseEvent):void
+		{
+			trace(event.delta);
+		}*/
+		
 		/**
 		 * Internal mouseDown handler. Starts dragging the handle.
 		 * @param event The MouseEvent passed by the system.
@@ -284,9 +290,6 @@ package com.bit101.components
 				dispatchEvent(new Event(Event.CHANGE));
 			}
 		}
-		
-		
-		
 		
 		///////////////////////////////////
 		// getter/setters

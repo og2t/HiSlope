@@ -1,0 +1,64 @@
+< languageVersion: 1.0; >
+
+kernel OldLens
+<   namespace: "";
+    vendor: "Kousho Shimada";
+    version: 1;
+    description: "chroma aberration/limb darkening filter";
+>
+{
+    input image4 src;
+    output pixel4 dst;
+    
+    parameter float2 center
+    <
+        minValue: float2(0.0);
+        maxValue: float2(2800.0);
+        defaultValue: float2(200.0);
+    >;
+
+    parameter float aberration
+    <
+        minValue: 1.0;
+        maxValue: 1.2;
+        defaultValue: 1.0;
+    >;
+
+    parameter float dim_strength
+    <
+        minValue: 0.0;
+        maxValue: 1.0;
+        defaultValue: 0.0;
+    >;
+
+    parameter float dim_size
+    <
+        minValue: 0.0;
+        maxValue: 1000.0;
+        defaultValue: 200.0;
+    >;
+    
+    void evaluatePixel()
+    {
+        float2 pos = outCoord();
+        float2 delta = pos - center;
+        float dist = distance(pos, center);
+        float aberration_g = (aberration - 1.0) / 2.0 + 1.0;
+        pixel4 pr = sampleLinear(src, center + delta / aberration);
+        pixel4 pg = sampleLinear(src, center + delta / aberration_g);
+        pixel4 pb = sampleLinear(src, pos);
+        
+        float dim = 1.0;
+
+        if(dist > dim_size * 0.8)
+        {
+            dim = 1.0 - (dist - dim_size * 0.8) / (dim_size * 0.8) * dim_strength;
+        }
+        else if(dist > dim_size)
+        {
+            dim = 1.0 - dim_strength;
+        }
+        
+        dst = pixel4(pr.r * dim, pg.g * dim, pb.b * dim, 1.0);
+    }
+}

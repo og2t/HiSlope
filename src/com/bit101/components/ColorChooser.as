@@ -238,7 +238,10 @@ package com.bit101.components
 		private function displayColors():void 
 		{
 			if (_colorsContainer.parent) _colorsContainer.parent.removeChild(_colorsContainer);
-			else _swatch.addChild(_colorsContainer);
+			else {
+				_swatch.addChild(_colorsContainer);
+				_colorsContainer.y = -84;
+			}
 		}		
 		
 		private function placeColors():void

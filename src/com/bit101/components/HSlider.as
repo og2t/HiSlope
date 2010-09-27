@@ -43,6 +43,5 @@ package com.bit101.components
 		{
 			super(Slider.HORIZONTAL, parent, xpos, ypos, defaultHandler);
 		}
-		
 	}
 }

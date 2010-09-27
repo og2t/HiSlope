@@ -6,7 +6,7 @@
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
 	http://play.blog2t.net/hislope
 
-	You are free to use this source code in any project. 
+	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
 	You are free to distribute this source code.
 
@@ -57,11 +57,12 @@ package hislope.filters
 		
 		public static var WIDTH:int = 320;
 		public static var HEIGHT:int = 240;
-		public static var PREVIEW_SCALE:Number = 1;
+		
 		public static var PREVIEW_SMOOTHING:Boolean = true;
-		public static var FIT_PREVIEW:Boolean = true;
 
 		public static var PROCESSED:String = "processed";
+		
+		public static const PI180:Number = Math.PI / 180;
 		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
@@ -69,12 +70,12 @@ package hislope.filters
 		protected var _defaultParams:Array;
 		protected var _presetParams:Object;
 		private var _debugVars:Array;
+		private var _previewScale:Number;
+		private var previewScaleMatrix:Matrix = new Matrix();
 
 		protected var point:Point;
 		protected var rect:Rectangle;
 		
-		protected static var previewScaleMatrix:Matrix = new Matrix();
-
 		protected var _enabled:Boolean = true;
 		protected var _generatePreview:Boolean = false;
 		protected var _drawHistogram:Boolean = false;
@@ -119,26 +120,10 @@ package hislope.filters
 			{
 				FilterBase.WIDTH = width;
 				FilterBase.HEIGHT = height;
-				setPreviewScale(FilterBase.PREVIEW_SCALE);
 			} else {
 				throw new Error("Error: wrong bitmap sizes");
 			}
 		}
-		
-		public function setPreviewScale(previewScale:Number):void
-		{
-			FilterBase.PREVIEW_SCALE = previewScale;
-			
-			previewScaleMatrix.identity();
-			previewScaleMatrix.scale(FilterBase.PREVIEW_SCALE, FilterBase.PREVIEW_SCALE);
-		}
-		
-		/*public function fitPreviewScale(scale:Number):void
-		{
-			var previewScale:Number = scale * 2;
-			if (previewScale > 1) previewScale = 1 / previewScale;
-			setPreviewScale(previewScale);
-		}*/
 		
 		public function start():void
 		{
@@ -178,7 +163,7 @@ package hislope.filters
 			// this gets overwritten in the subclass 
 		}
 		
-		public function getPreviewFor(metaBmpData:MetaBitmapData):void
+		public function getPreviewFor(metaBmpData:*):void
 		{
 			/* Do not make previews if there's no panel */
 			if (!filterPanel) return;
@@ -188,13 +173,22 @@ package hislope.filters
 			// store metaBmpData as result
 			_resultBmpData.copyPixels(metaBmpData, rect, point);
 			
-			if (_drawHistogram) drawHistogram();
-			if (_generatePreview) _previewBmpData.draw(_resultBmpData, previewScaleMatrix, null, null, null, PREVIEW_SMOOTHING);
+			if (_drawHistogram) drawHistogram(metaBmpData.roi);
 			
-			if (_histogramChannels != 7)
+			if (_generatePreview)
 			{
-				_previewBmpData.fillRect(rect, 0xFF000000);
-				_previewBmpData.copyChannel(_resultBmpData, rect, point, _histogramChannels, _histogramChannels);
+				_previewBmpData.draw(_resultBmpData, previewScaleMatrix, null, null, null, PREVIEW_SMOOTHING);
+				
+				if (_histogramChannels == 7)
+				{
+					if (previewScale == 1.0)
+					{
+						_previewBmpData.fillRect(rect, 0xFF000000);
+						_previewBmpData.copyChannel(_resultBmpData, rect, point, _histogramChannels, _histogramChannels);
+					} else {
+						// TODO add 
+					}
+				}
 			}
 			
 			dispatchEvent(new Event(FilterBase.PROCESSED));
@@ -264,14 +258,8 @@ package hislope.filters
 		{
 			_resultBmpData.dispose();
 			_resultBmpData = null;
-		}
-		
-		public function restrictToRegion(region:Rectangle):void
-		{
-			//trace(this, ": restrictToRegion", region);
 			
-			rect = region;
-			point = rect.topLeft;
+			// TODO remove other stuff here as well
 		}
 		
 		public function randomiseParams():void
@@ -298,6 +286,7 @@ package hislope.filters
 			{
 				this[name] = value;
 			}
+			
 			catch (error:Error)
 			{
 				throw new Error("Error: Value " + name + " not defined on " + _name + ". Use getter/setter or define variable as public.");
@@ -312,15 +301,17 @@ package hislope.filters
 			{
 				return this[name];
 			}
+			
 			catch (error:Error)
 			{
 				throw new Error("Error: Value " + name + " not defined on " + _name + ". Use getter/setter or define variable as public.");
 			}
 		}
 		
-		public function getHistogramDataFor(source:MetaBitmapData):void
+		protected function getHistogramDataFor(source:MetaBitmapData, useROI:Boolean = false):void
 		{
-			_histogramData = source.histogram(source.rect);
+			if (!useROI) _histogramData = source.histogram(source.rect);
+			else _histogramData = source.histogram(source.roi);
 		}
 				
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -350,7 +341,7 @@ package hislope.filters
 			}
 		}
 		
-		private function drawHistogram():void
+		private function drawHistogram(rect:Rectangle):void
 		{
 			// FIXME attribute Quasimondo
 			
@@ -415,11 +406,23 @@ package hislope.filters
 			return _resultBmpData.clone() as BitmapData;
 		}
 		
+		public function set previewScale(value:Number):void
+		{
+			_previewScale = value;
+			previewScaleMatrix.identity();
+			previewScaleMatrix.scale(_previewScale, _previewScale);
+		}
+		
+		public function get previewScale():Number
+		{
+			return _previewScale;
+		}
+		
 		public function get preview():BitmapData
 		{
 			trace("!", _histogramChannels);
 			
-			if (FilterBase.PREVIEW_SCALE == 1 && _histogramChannels == 7) return _resultBmpData;
+			if (_previewScale == 1 && _histogramChannels == 7) return _resultBmpData;
 			return _previewBmpData;
 		}
 		
@@ -448,12 +451,17 @@ package hislope.filters
 		{
 			_generatePreview = value;
 			
-			if (PREVIEW_SCALE == 1) _generatePreview = false;
+			if (_previewScale == 1) _generatePreview = false;
 		}
 		
 		public function set generateHistogram(value:Boolean):void
 		{
 			_drawHistogram = value;
+		}
+		
+		public function get generateHistogram():Boolean
+		{
+			return _drawHistogram;
 		}
 		
 		public function get name():String

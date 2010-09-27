@@ -6,7 +6,7 @@
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
 	http://play.blog2t.net/hislope
 
-	You are free to use this source code in any project. 
+	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
 	You are free to distribute this source code.
 
@@ -49,7 +49,7 @@ package hislope.display
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 	
 		private var _fillColor:uint;
-		private var _activeRect:Rectangle;
+		private var _roi:Rectangle;
 		public var originalPoint:Point;
 		private var translationMatrix:Matrix;
 		
@@ -71,7 +71,7 @@ package hislope.display
 
 			_fillColor = fillColor;
 			
-			_activeRect = new Rectangle(0, 0, width, height);
+			_roi = new Rectangle(0, 0, width, height);
 			originalPoint = new Point();
 			translationMatrix = new Matrix();
 		}
@@ -83,11 +83,13 @@ package hislope.display
 			return new MetaBitmapData(width, height, transparent, _fillColor);
 		}
 		
-		override public function clone():BitmapData
+		/*override public function clone():BitmapData
 		{
-			return new MetaBitmapData(width, height, transparent, _fillColor);
-		}
+			throw new Error("Use MetaBitmapData.getClone()");
+			return null;//new MetaBitmapData(width, height, transparent, _fillColor);
+		}*/
 		
+		// FIXME WTF about these methods?
 		public function getClone():MetaBitmapData
 		{
 			return new MetaBitmapData(width, height, transparent, _fillColor);
@@ -110,14 +112,14 @@ package hislope.display
 			// when used with ShaderFilter and totally ignores the destPoint
 			area.offset(-area.x, -area.y);
 			targetBmpData.setPixels(area, areaPixels);
-			targetBmpData.activeRect = area;
+			targetBmpData._roi = area;
 			return targetBmpData;
 		}
 		
 		public function drawActiveAreaTo(targetBmpData:MetaBitmapData, destPoint:Point = null):void
 		{
-			if (destPoint) targetBmpData.copyPixels(this, activeRect, destPoint);
-			else targetBmpData.copyPixels(this, activeRect, originalPoint);
+			if (destPoint) targetBmpData.copyPixels(this, _roi, destPoint);
+			else targetBmpData.copyPixels(this, _roi, originalPoint);
 		}
 		
 		/*public function drawInPlace(source:IBitmapDrawable):void
@@ -127,48 +129,87 @@ package hislope.display
 			super.draw(source, translationMatrix);
 		}*/
 		
-		public function copyTo(targetBmpData:BitmapData):void
+		public function copyTo(targetBmpData:*):void
 		{
 			targetBmpData.lock();
-			targetBmpData.copyPixels(this, this.rect, this.rect.topLeft);
+			targetBmpData.copyPixels(this, roi, roi.topLeft);
+			/*targetBmpData.copyPixels(this, rect, rect.topLeft);*/
 			targetBmpData.unlock();
 			
-			for (var property:Object in this)
+			if (targetBmpData is MetaBitmapData)
 			{
-				targetBmpData[property] = this[property];
+				for (var property:Object in this)
+				{
+					targetBmpData[property] = this[property];
+				}
 			}
 		}
 		
 		public function processFilter(filter:*):void
 		{
-			if (_activeRect) return super.applyFilter(this, activeRect, activeRect.topLeft, filter);
+			if (_roi) return super.applyFilter(this, _roi, _roi.topLeft, filter);
 			return super.applyFilter(this, rect, rect.topLeft, filter);
 		}
 		
+		// FIXME Flash bug when appling Shader to a portion of a BitmapData 
 		public function applyShader(shaderFilter:*):void
 		{
-			if (_activeRect) return super.applyFilter(this, new Rectangle((width - activeRect.width) / 2, (height - activeRect.height) / 2, 0, 0), new Point(), shaderFilter);
+			if (_roi) return super.applyFilter(this, new Rectangle((width - _roi.width) / 2, (height - _roi.height) / 2, 0, 0), new Point(), shaderFilter);
 			return super.applyFilter(this, rect, rect.topLeft, shaderFilter);
 			//return super.applyFilter(this, rect, new Point(), shaderFilter);
 		}
 		
-		public function get activeRect():Rectangle
+		public function get roi():Rectangle
 		{
-			if (_activeRect) return _activeRect.clone();
+			if (_roi) return _roi.clone();
+			return rect;
+		}
+		
+		public function set roi(value:Rectangle):void
+		{
+			_roi = value;
+		}
+		
+		public function resetROI():void
+		{
+			_roi.x = 0;
+			_roi.y = 0;
+			_roi.width = width;
+			_roi.height = height;
+		}
+		
+		/*public function set rect(value:Rectangle):void
+		{
+			_roi = value;
+		}
+		
+		override public function get rect():Rectangle
+		{
+			return _roi;
+		}*/
+		
+		/*public function get activeRect():Rectangle
+		{
+			if (_roi) return _roi.clone();
 			return null;
 		}
 		
 		public function set activeRect(value:Rectangle):void
 		{
-			_activeRect = value;
-		}
+			_roi = value;
+		}*/
 		
 		public function blur(blur:int = 0, quality:int = 2):void
 		{
-			//trace(_activeRect);
+			trace(_roi);
 			
-			super.applyFilter(this, _activeRect, _activeRect.topLeft, new BlurFilter(blur, blur, quality));
+			super.applyFilter(this, _roi, _roi.topLeft, new BlurFilter(blur, blur, quality));
 			/*super.applyFilter(this, rect, point, new BlurFilter(blur, blur, quality));*/
+		}
+		
+		public function fill(color:uint):void
+		{
+			super.fillRect(rect, color);
 		}
 		
 		public function clear():void
@@ -179,6 +220,12 @@ package hislope.display
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
+		
+		public function set fillColor(value:uint):void
+		{
+			_fillColor = value;
+		}
+		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
 		
 		public function scaleTo(targetBmpData:BitmapData, scale:Number = 1.0, smoothing:Boolean = true):void

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
 
-	[AS3] XProcess
+	[AS3] OldLens
 	=======================================================================================
 
 	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
@@ -13,7 +13,7 @@
 	You may NOT charge anything for this source code.
 	This notice and the copyright information must be left intact in any distribution of this source code. 
 	You are encouraged to release any improvements back to the ActionScript community.
-	
+
 	VERSION HISTORY:
 	v0.1	Born on 09/07/2009
 
@@ -32,49 +32,65 @@ package hislope.filters.pixelbender.fx
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
 	import hislope.display.MetaBitmapData;
-	import flash.events.Event;
-	import flash.display.BitmapData;
-	import flash.display.Shader;
-	import net.blog2t.util.ColorUtils;
-	import hislope.filters.FilterBase;
-	import flash.filters.ShaderFilter;
-	import flash.utils.ByteArray;
-
+	import hislope.filters.PBFilterBase;
+	
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	public class XProcess extends FilterBase
+	public class OldLens extends PBFilterBase
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
-		private static const NAME:String = "XProcess";
-		private static const PARAMETERS:Array = [
+		private static const NAME:String = "Old Lens";
+		private static var PARAMETERS:Array = [
 			{
-				name: "amount",
-				current: 0.2
+				name: "centerX",
+				min: 0,
+				max: 320,
+				current: 160
+			}, {
+				name: "centerY",
+				min: 0,
+				max: 240,
+				current: 120
+			}, {
+				name: "aberration",
+				step: 0.01,
+				min: 1.0,
+				max: 1.2,
+				current: 1.07
+			}, {
+				name: "dimStrength",
+				label: "dim strength",
+				step: 0.01,
+				current: 0.3
+			}, {
+				name: "dimSize",
+				label: "dim size",
+				min: 0,
+				max: 320,
+				current: 64
 			}
 		];
 
-		[Embed("../../../pbj/fx/XProcess.pbj", mimeType="application/octet-stream")]
-		private const pbjFile:Class;
-		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		private var shaderFilter:ShaderFilter;
-		private var shader:Shader;
+		[Embed("../../../pbj/fx/OldLens.pbj", mimeType="application/octet-stream")]
+		private const pbjFile:Class;
 
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
-
-		public var amount:Number;
-	
+		
+		public var centerX:Number;
+		public var centerY:Number;
+		public var aberration:Number;
+		public var dimStrength:Number;
+		public var dimSize:Number;
+			
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function XProcess(OVERRIDE:Object = null)
+		public function OldLens(OVERRIDE:Object = null)
 		{
-			shader = new Shader(new pbjFile() as ByteArray);
-           	shaderFilter = new ShaderFilter(shader);
+			super(pbjFile, PARAMETERS);
 
-			/*detectKernelParams(shader, PARAMETERS);*/
-			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
 		
@@ -82,18 +98,22 @@ package hislope.filters.pixelbender.fx
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
-			metaBmpData.applyFilter(metaBmpData, rect, point, shaderFilter);
-
+			metaBmpData.applyShader(shaderFilter);
+			
 			getPreviewFor(metaBmpData);
 		}
 		
-		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
-		
 		override public function updateParams():void
-		{
-			shader.data.amount.value = [amount];
+		{		
+			shader.data.center.value = [centerX, centerY];
+			shader.data.aberration.value = [aberration];
+			shader.data.dim_strength.value = [dimStrength];
+			shader.data.dim_size.value = [dimSize];
+			
+			super.updateParams();
 		}
 		
+		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
 		// HELPERS ////////////////////////////////////////////////////////////////////////////

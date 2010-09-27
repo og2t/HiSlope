@@ -1,7 +1,7 @@
-<languageVersion : 1.0;>
+<languageVersion: 1.0;>
 kernel XProcess
 <   
-	namespace: "net.blog2t.filters";
+	namespace: "net.blog2t.hislope";
     vendor: "Tomek Augustyn / Og2t";
     version: 1;
     description: "Cross Process";
@@ -20,10 +20,11 @@ kernel XProcess
     void evaluatePixel()
     {
         pixel4 p = sampleNearest(src, outCoord());
-        
-        p.r -= sin(6.28 * p.r) * amount / 3.14;
-        p.g -= sin(6.28 * p.g) * amount / 3.14;
-        p.b += sin(6.28 * p.b) * amount / 3.14;
+        float div = amount / 3.14;
+
+        p.r -= sin(6.28 * p.r) * div;
+        p.g -= sin(6.28 * p.g) * div;
+        p.b += sin(6.28 * p.b) * div;
         
         dst = p;
     }

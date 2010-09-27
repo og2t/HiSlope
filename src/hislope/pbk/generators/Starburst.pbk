@@ -1,0 +1,106 @@
+<languageVersion: 1.0;>
+
+kernel Starburst
+<   
+	namespace: "net.blog2t.filters";
+    vendor: "Tomek Augustyn / Og2t";
+    version: 1;
+    description: "Juicy Wicked Starburst";
+>
+{
+
+    #if !AIF_FLASH_TARGET
+
+	parameter float2 size
+	<
+	    minValue: float2(0.0, 0.0);
+	    maxValue: float2(1024.0, 1024.0);
+	    defaultValue: float2(640, 480);
+	>;
+
+    #endif
+    
+	parameter float3 foreground
+	<
+		minValue: float3(0.0, 0.0, 0.0);
+		maxValue: float3(1.0, 1.0, 1.0);
+		defaultValue: float3(1.0, 1.0, 1.0);
+	>;
+
+	parameter float3 background
+	<
+		minValue: float3(0.0, 0.0, 0.0);
+		maxValue: float3(1.0, 1.0, 1.0);
+		defaultValue: float3(0.0, 0.0, 0.0);
+	>;
+
+	parameter int period 
+	< 
+	     defaultValue: int(3.0); 
+	     minValue: int(0.0); 
+	     maxValue: int(50.0);
+	     description: "period";
+	>;
+
+	parameter float twist 
+	< 
+	     defaultValue: float(0.0); 
+	     minValue: float(-1.0); 
+	     maxValue: float(1.0);
+	     description: "twist";
+	>;
+
+	parameter float fill 
+	< 
+	     defaultValue: float(0.25); 
+	     minValue: float(0.0); 
+	     maxValue: float(1.0);
+	     description: "fill";
+	>;
+
+	parameter float rotation 
+	< 
+	     defaultValue: float(45.0); 
+	     minValue: float(0.0); 
+	     maxValue: float(90.0);
+	     description: "Rotation";
+	>;
+
+	parameter float2 center
+	<
+	    defaultValue : float2(200.0, 150.0);
+	    minValue : float2(0.0,0.0);
+	    maxValue : float2(512.0,512.0);        
+	>;
+
+    output pixel4 dstPixel;
+
+    #if !AIF_FLASH_TARGET
+
+    region generated()
+    {
+        return region(float4(0.0, 0.0, size.x, size.y));
+    }
+    
+    #endif
+
+    void evaluatePixel()
+    {        
+        float2 srcCoord = outCoord();
+        float2 shift = srcCoord - center;
+        
+        float offset = rotation + sqrt(shift.x * shift.x + shift.y * shift.y) * twist / 10.0;
+        float val = mix(sin(offset + atan(shift.y, shift.x) * float(period)), sin(offset + atan(shift.y, shift.x) * float(period / 2)), fill);
+
+		// bw only (actually not much faster)
+        //dstPixel = pixel4(val, val, val, 1.0);
+
+ 		dstPixel = pixel4(
+            mix(background.r, foreground.r, val),
+            mix(background.g, foreground.g, val),
+            mix(background.b, foreground.b, val),
+            1.0
+        );
+    }
+}
+    

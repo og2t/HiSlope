@@ -1,0 +1,100 @@
+<languageVersion: 1.0;>
+
+kernel Metaballs
+<
+	namespace: "com.rocketmandevelopment";
+	vendor: "Rocketman Development";
+	version: 1;
+	description: "Fast Metaballs";
+>
+{
+	parameter float2 cutOff
+	<
+	minValue: float2(0,0);
+	maxValue: float2(1,1);
+	defaultValue: float2(0.0, 1.0);
+	>;
+    
+	parameter float divider
+	<
+	minValue: float(1.0);
+	maxValue: float(20.0);
+	defaultValue: float(5.0);
+	>;
+
+	parameter float3 ball1
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,500.0);
+	defaultValue:float3(50.0,150.0,50.0);
+	description: "ball1: x, y, radius";
+	>;
+
+	parameter float3 ball2
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,250.0);
+	defaultValue:float3(100.0,100.0,50.0);
+	description: "ball2: x, y, radius";
+	>;
+
+	parameter float3 ball3
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,250.0);
+	defaultValue:float3(200.0,200.0,50.0);
+	description: "ball3: x, y, radius";
+	>;
+
+	parameter float3 ball4
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,250.0);
+	defaultValue:float3(400.0,300.0,50.0);
+	description: "ball4: x, y, radius";
+	>;
+
+	parameter float3 ball5
+	<
+	minValue:float3(0.0,0.0,0.0);
+	maxValue:float3(640.0,480.0,250.0);
+	defaultValue:float3(300.0,250.0,50.0);
+	description: "ball5: x, y, radius";
+	>;
+
+	#if !AIF_FLASH_TARGET
+
+		parameter float2 size
+		<
+		minValue: float2(0, 0);
+		maxValue: float2(1024, 1024);
+		defaultValue: float2(640.0, 480.0);
+		>;
+
+		region generated()
+		{
+			return region(float4(0, 0, size.x, size.y));
+		}
+
+	#endif
+
+	output pixel4 dst;
+
+	void evaluatePixel()
+	{
+		float2 coord = outCoord();
+
+		float sum = 0.0;
+
+		sum += ball1.z / distance(ball1.xy, coord);
+		sum += ball2.z / distance(ball2.xy, coord);
+		sum += ball3.z / distance(ball3.xy, coord);
+		sum += ball4.z / distance(ball4.xy, coord);
+		sum += ball5.z / distance(ball5.xy, coord);
+
+        //sum = pow(sum / 5.0, divider);
+		sum = (sum / divider - cutOff[0]) / (cutOff[1] - cutOff[0]);
+		
+        dst.rgba = float4(sum, sum, sum, 1);
+	}
+}
