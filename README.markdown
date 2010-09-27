@@ -1,7 +1,6 @@
 #HiSlope
 
-Proper docs and more examples soon to follow. I am preparing everything for my talk at Assembly Summer in Helsinki.
-Stay patient :)
+Check out the project page [http://play.blog2t.net/HiSlope](http://play.blog2t.net/HiSlope) for updates.
 
 ##Hello world
 
