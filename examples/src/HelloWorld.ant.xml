@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="HiSlope - Hello World" default="main" basedir=".">
+
+        <target name="main" depends="compile, run"/>
+
+        <target name="compile">
+        	<fdt.launch.application 	projectname="HiSlope Release"
+        								mainclass="HelloWorld.as"
+        								target="${basedir}/../bin/hello_world.swf"
+        								debug="true"
+        								compilerarguments="-define=CONFIG::DEBUG,true"
+        	/>
+        </target>
+
+		<target name="run">
+			<fdt.browse location="${basedir}/../bin/hello_world.swf" />
+	  	</target>
+
+</project>
