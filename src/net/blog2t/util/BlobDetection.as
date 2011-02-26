@@ -45,7 +45,7 @@ package net.blog2t.util
 			minHeight:int = 2,
 			maxWidth:int = 20,
 			maxHeight:int = 20,
-			maxBlobs = 20,
+			maxBlobs:int = 20,
 			oversizedBlobRects:Array = null):void
 		{
 			var blobRect:Rectangle;

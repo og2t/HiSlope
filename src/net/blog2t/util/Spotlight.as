@@ -48,7 +48,7 @@ package net.blog2t.util
 	import flash.filters.BlurFilter;
 	
 	import gs.TweenLite;
-	import fl.motion.easing.Exponential;
+	import gs.easing.Expo;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
@@ -122,7 +122,7 @@ package net.blog2t.util
 			{
 				scaleX: 0,
 				scaleY: 0,
-				ease: Exponential.easeOut
+				ease: Expo.easeOut
 			});
 		}
 		
@@ -141,7 +141,7 @@ package net.blog2t.util
 			{
 				scaleX: 1,
 				scaleY: 1,
-				ease: Exponential.easeOut
+				ease: Expo.easeOut
 			});
 		}
 		
@@ -161,14 +161,14 @@ package net.blog2t.util
 			TweenLite.to(this, TRANSITION_SPEED,
 			{
 				autoAlpha: _overlayOpacity,
-				ease: Exponential.easeInOut
+				ease: Expo.easeInOut
 			});
 			
 			TweenLite.to(spotlight, TRANSITION_SPEED,
 			{
 				scaleX: 1,
 				scaleY: 1,
-				ease: Exponential.easeInOut
+				ease: Expo.easeInOut
 			});
 		}
 		
@@ -186,14 +186,14 @@ package net.blog2t.util
 					if (setRadius != -1) radius = setRadius;
 					if (setBlur != -1) blur = setBlur;
 				},
-				ease: Exponential.easeInOut
+				ease: Expo.easeInOut
 			});
 			
 			TweenLite.to(spotlight, TRANSITION_SPEED,
 			{
 				scaleX: ZOOM_SCALE,
 				scaleY: ZOOM_SCALE,
-				ease: Exponential.easeInOut
+				ease: Expo.easeInOut
 			});
 		}
 		

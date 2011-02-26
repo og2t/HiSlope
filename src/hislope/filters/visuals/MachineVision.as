@@ -120,7 +120,7 @@ package hislope.filters.visuals
 		private var pts:Array;
 		private var blobRects:Array = [];
 		private var oversizedBlobRects:Array = [];
-		private var infoArea:TextField = new InfoArea().textTF;
+		/*private var infoArea:TextField = new InfoArea().textTF;*/
 		private var matrix:Matrix = new Matrix();
 	
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
@@ -208,7 +208,7 @@ package hislope.filters.visuals
 					outline.graphics.drawCircle(pt.X, pt.Y, 0.5);
 				}
 				
-				infoArea.text = pts.length + " PTS\n" + delaunay.length + " TRGS";
+				/*infoArea.text = pts.length + " PTS\n" + delaunay.length + " TRGS";*/
 			}
 			
 			if (metaBmpData.eyes)
@@ -228,7 +228,7 @@ package hislope.filters.visuals
 			matrix.identity();
 			matrix.translate(spotlight.centerX + spotlight.radius + 10, spotlight.centerY);
 			
-			metaBmpData.draw(infoArea, matrix);
+			/*metaBmpData.draw(infoArea, matrix);*/
 
 			getPreviewFor(metaBmpData);
 		}
