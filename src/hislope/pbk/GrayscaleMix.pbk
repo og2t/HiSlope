@@ -1,0 +1,40 @@
+<languageVersion: 1.0;>
+
+kernel GrayscaleMix
+<   
+	namespace: "net.blog2t.filters";
+    vendor: "Tomek Augustyn / Og2t";
+    version: 1;
+    description: "Grayscale Mix";
+>
+{
+	parameter float threshold
+	< 
+	     defaultValue: float(0.9); 
+	     minValue: float(0.0);
+	     maxValue: float(1.0);
+	     description: "Threshold";
+	>;
+	
+	parameter pixel3 rgb
+	<
+		 defaultValue: pixel3(0.5, 0.5, 0.7); 
+	     minValue: pixel3(0.0, 0.0, 0.0);
+	     maxValue: pixel3(1.0, 1.0, 1.0);
+	     description: "rgb";
+	>;
+
+	input image4 srcPixel;
+	input image4 rasterPixel;
+	output pixel4 dstPixel;
+
+    void evaluatePixel()
+    {        
+        pixel4 srcPixel = sampleNearest(srcPixel, outCoord());
+        pixel4 rasterPixel = sampleNearest(rasterPixel, outCoord());
+
+        float avg = rgb.r * srcPixel.r + rgb.g * srcPixel.g + rgb.b * srcPixel.b;
+        float gray = (rasterPixel.r * threshold + avg - threshold) / (1.0 - threshold);
+        dstPixel = pixel4(gray, gray, gray, 1.0);
+    }
+}

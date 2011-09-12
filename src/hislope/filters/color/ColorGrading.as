@@ -34,7 +34,7 @@ package hislope.filters.color
 	import hislope.display.MetaBitmapData;
 	import flash.display.BitmapData;
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import net.blog2t.util.BitmapUtils;
 	
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ package hislope.filters.color
 			BitmapUtils.desaturate(metaBmpData);
 			metaBmpData.paletteMap(metaBmpData, rect, point, paletteMap.reds, paletteMap.greens, paletteMap.blues, paletteMap.alphas);
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -95,6 +95,8 @@ package hislope.filters.color
 		override public function updateParams():void
 		{			
 			paletteMap.colorGrading([colorStart, colorMiddle, colorEnd], 256);
+			
+			super.updateParams();
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

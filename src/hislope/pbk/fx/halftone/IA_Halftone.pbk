@@ -1,0 +1,67 @@
+<languageVersion : 1.0;>
+ 
+kernel Halftone
+<   namespace : "iasseo.pixelbender";
+    vendor : "Itai Asseo";
+    version : 1;
+    description : "HalfTone";
+>
+{
+    parameter int radius    
+    <   minValue:int(0);
+        maxValue:int(50); 
+        defaultValue:int(4); 
+    >;
+    
+    parameter int offset
+    <   minValue:int(0);
+        maxValue:int(10); 
+        defaultValue:int(2); 
+    >;
+    
+     parameter float brightness
+    <   minValue:float(0);
+        maxValue:float(1); 
+        defaultValue:float(.92); 
+    >;
+    
+    parameter float multiplier
+    <   minValue:float(0.2);
+        maxValue:float(8.0); 
+        defaultValue:float(1.3); 
+    >;
+
+    const pixel4 blank = pixel4(0,0,0,0);    
+    input image4 src;
+    output pixel4 outputPixel;
+    
+    void 
+    evaluatePixel()
+    {
+        int fullOffset = offset*radius;
+
+        //what color should go out?
+        float2 gridWidth = float2((radius)*2 +offset);
+        float2 sampledPixelLocation = floor(float2(outCoord().x,outCoord().y+float(offset)) / gridWidth) * gridWidth;
+        pixel4 sampledPixel = sampleNearest(src, sampledPixelLocation);
+
+        //find center
+        float2 centerPixel = floor(outCoord() / gridWidth) * gridWidth + (gridWidth/2.0);
+        centerPixel.y-=float(offset)*.5;
+        
+        //how far from center?
+        float dist = distance(centerPixel, outCoord());
+        
+        //halftoning
+        pixel4 white = pixel4( brightness, brightness, brightness,0);
+        float radius2 = float(radius)*(sampledPixel.r+sampledPixel.g+sampledPixel.b+sampledPixel.a)/4.0;
+        radius2 *= multiplier;
+        if (radius2 > 4.0){
+            radius2 = 4.0;
+        }
+        
+        white.a = 1.0-(dist-radius2);
+        outputPixel = white;
+    }
+
+}

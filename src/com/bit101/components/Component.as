@@ -50,7 +50,8 @@ package com.bit101.components
 		// So if you are using the Flex 3.x sdk compiler, switch the embed statment below to expose the correct version.
 
 		// Flex 4.x sdk:
-		[Embed(source="/assets/pf_ronda_seven.ttf", embedAsCFF="false", fontName="PF Ronda Seven", mimeType="application/x-font")]
+		/*[Embed(source="../../../../assets/pf_ronda_seven.ttf", embedAsCFF="false", fontName="PF Ronda Seven", mimeType="application/x-font")]*/
+		[Embed(source="../../../../assets/pf_tempesta_seven_condensed.ttf", embedAsCFF="false", fontName="PF Ronda Seven", mimeType="application/x-font")]
 
 		// Flex 3.x sdk:
 		/*[Embed(source="/assets/pf_ronda_seven.ttf", fontName="PF Ronda Seven", mimeType="application/x-font")]*/
@@ -182,21 +183,21 @@ package com.bit101.components
 		private function addKeyListener(event:MouseEvent):void
 		{
 			if (this is HUISlider) Component.current = this;
-			if (stage) stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown, false, 0, true);
+			/*if (stage) stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown, false, 0, true);*/
 		}
 		
-		protected function onKeyDown(event:KeyboardEvent):void
+		/*protected function onKeyDown(event:KeyboardEvent):void
 		{
 			if (!Component.current) return;
 			
 			switch (event.keyCode)
 			{
-				case 37: if ("onKeyLeft" in Component.current) Component.current.onKeyLeft();
+				case 37: if ("decreaseValue" in Component.current) Component.current.decreaseValue();
 				break;
-				case 39: if ("onKeyRight" in Component.current) Component.current.onKeyRight();
+				case 39: if ("increaseValue" in Component.current) Component.current.increaseValue();
 				break;
 			}
-		}
+		}*/
 		
 		///////////////////////////////////
 		// getter/setters

@@ -110,7 +110,8 @@ package hislope.filters.pixelbender
 			}, {
 				name: "autoLevels",
 				label: "auto levels",
-				current: true
+				current: true,
+				random: false
 			}, {
 				name: "numPixels",
 				label: "num pixels threshold",
@@ -227,8 +228,8 @@ package hislope.filters.pixelbender
 			metaBmpData.applyFilter(metaBmpData, rect, point, shaderFilter);
 			/*metaBmpData.applyFilter(metaBmpData, new Rectangle(rectX, rectY, rectWidth, rectHeight), new Point(pointX, pointY), shaderFilter);*/
 
-			/*getPreviewFor(metaBmpData);*/
-			getPreviewFor(metaBmpData);
+			/*postPreview(metaBmpData);*/
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -267,12 +268,15 @@ package hislope.filters.pixelbender
 			}
 		}
 		
+		
 		override public function updateParams():void
 		{
 			shader.data.luminance.value = [luminanceMin, luminanceMax];
 			shader.data.red.value = [redMin, redMax];
 			shader.data.green.value = [greenMin, greenMax];
 			shader.data.blue.value = [blueMin, blueMax];
+			
+			super.updateParams();
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

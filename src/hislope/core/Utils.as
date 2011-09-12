@@ -31,14 +31,12 @@ package hislope.core
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
-	import flash.display.Sprite;
-	import flash.events.Event;
-	import flash.events.MouseEvent;
-	import flash.text.TextField;
+	import flash.display.Shader;
+	import flash.display.ShaderParameter;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	public class Utils extends Sprite
+	public class Utils
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
@@ -46,11 +44,6 @@ package hislope.core
 		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
-		public function Utils() 
-		{
-			addEventListener(Event.ADDED_TO_STAGE, addedToStage, false, 0, true);
-		}
-
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 		
 		public static function detectKernelParameters(shader:Shader, params:Array):void
@@ -84,6 +77,17 @@ package hislope.core
 			    }
 			}
 		}
+
+		
+		// Shamelessly stolen from SoulWire's SimpleGUI
+		public static function propToLabel(prop:String):String
+		{
+			return prop .replace(/[_]+([a-zA-Z0-9]+)|([0-9]+)/g, " $1$2 ")
+						.replace(/(?<=[a-z0-9])([A-Z])|(?<=[a-z])([0-9])/g, " $1$2")
+						.replace(/^\s|\s$|(?<=\s)\s+/g, '').toLowerCase();
+		}
+		
+		
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

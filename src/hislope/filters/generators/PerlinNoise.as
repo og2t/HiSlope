@@ -60,7 +60,7 @@ package hislope.filters.generators
 				type: "int",
 				current: 2,
 				min: 1,
-				max: 2
+				max:34
 			}, {
 				name: "base",
 				label: "base",
@@ -74,7 +74,7 @@ package hislope.filters.generators
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		private var pointsArray:Array = [new Point(1, 1), new Point(3, 3)];
+		private var pointsArray:Array = [new Point(1, 1), new Point(3, 3), new Point(2, 2)];
 		private var timer:Timer;
 
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
@@ -102,15 +102,19 @@ package hislope.filters.generators
 			pointsArray[0].y += 1;
 			pointsArray[1].x += 2;
 			pointsArray[1].y += 0;
+			pointsArray[2].x -= 1;
+			pointsArray[2].y -= 1;
 			
 			metaBmpData.perlinNoise(base, base, numOctaves, 0, stitch, true, 7, true, pointsArray);
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void
 		{		
 			if (timer) timer.delay = int(1000 / fps);
+			
+			super.updateParams();
 		}
 		
 		override public function start():void

@@ -68,17 +68,17 @@ package com.bit101.components
 			formatValueLabel();
 		}
 		
-		public function onKeyRight():void
+		/*public function increaseValue():void
 		{
 			value += _tick;
 			onSliderChange();
 		}
 		
-		public function onKeyLeft():void
+		public function decreaseValue():void
 		{
 			value -= _tick;
 			onSliderChange();
-		}
+		}*/
 		
 		/**
 		 * Creates and adds the child display objects of this component.
@@ -203,6 +203,7 @@ package com.bit101.components
 		}
 		public function get value():Number
 		{
+			if (_precision == 0) return Math.round(_slider.value);
 			return _slider.value;
 		}
 		

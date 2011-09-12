@@ -43,6 +43,7 @@ package hislope.filters.inputs
 	import flash.utils.Timer;
 	import hislope.events.HiSlopeEvent;
 	import hislope.controllers.VideoFile;
+	import net.blog2t.util.print_r;
 	
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
@@ -51,14 +52,26 @@ package hislope.filters.inputs
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
 		private static const NAME:String = "Video Player";
-		private static const PARAMETERS:Array = [
-			{
+		private static var PARAMETERS:Array = [
+			/*{
+				name: "videoURL",
+				label: "Select Video",
+				type: "combo",
+				current: 0,
+				items: []
+			}, */{
 				name: "position",
 				label: "position"
-			}, {
-				name: "bufferLength",
-				label: "buffer length",
-				mode: "readonly"
+			}/*, {
+				name: "videoRange",
+				type: "range",
+				min: 0,
+				max: 1
+			}*/,{
+				name: "autoFit",
+				label: "auto fit width",
+				current: true,
+				type: "boolean"
 			}, {
 				name: "mirrorMode",
 				label: "mirror",
@@ -69,10 +82,16 @@ package hislope.filters.inputs
 				callback: "togglePlay",
 				type: "button"
 			}, {
-				label: "restart",
-				callback: "restart",
+				label: "rewind video",
+				callback: "rewind",
 				type: "button"
 			}
+		];
+		
+		private static const DEBUG:Array = [
+			"videoName",
+			"videoTime",
+			"bufferLength"
 		];
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
@@ -80,51 +99,68 @@ package hislope.filters.inputs
 		private var videoFile:VideoFile;
 		private var matrix:Matrix = new Matrix();
 		private var scale:Number = 1;
+		private var videoFullScale:Number = 1;
 		
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
 		
-		private var _position:Number;
+		public var videoURL:String;
+		public var _position:Number;
 		public var bufferLength:Number;
 		public var mirrorMode:Boolean;
+		public var autoFit:Boolean;
+		/*public var videoRange:Number;*/
+		public var videoName:String;
 			
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
 		public function VideoPlayer(OVERRIDE:Object = null)
 		{
-						
-			init(NAME, PARAMETERS, OVERRIDE);
+			init(NAME, PARAMETERS, OVERRIDE, DEBUG);
 		}
+
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 
+		public function queueVideo(url:String, name:String):void
+		{
+		}
+
 		public function addVideo(url:String, name:String):void
 		{
-			videoFile = new VideoFile(url);//, name);
-			//add to combo box with the name
-			videoFile.addEventListener(Event.CHANGE, render, false, 0, true);
+			/*var numItems:int = PARAMETERS[0].items.length;
+			PARAMETERS[0].items[numItems] = { label: name, value: url };*/
+			
+			videoFile = new VideoFile(url);
 			videoFile.addEventListener(VideoFile.START, initVideo, false, 0, true);
+			videoFile.addEventListener(Event.CHANGE, render, false, 0, true);
+			
+			this.videoName = name + " / " + url;
 		}
+		
 		
 		private function initVideo(event:Event):void
 		{
-			scale = WIDTH / videoFile.width;
-			/*updateParams();*/
+			videoFullScale = WIDTH / videoFile.width;
+			updateParams();
 		}
+
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
 			metaBmpData.fillRect(metaBmpData.rect, 0x000000);
-			metaBmpData.processingScale = scale;
 			
 			metaBmpData.draw(videoFile.currentFrame, matrix, null, null, null, true);
 			metaBmpData.fullSizeBmpData = videoFile.currentFrame;
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
+
 		
 		override public function updateParams():void
 		{
 			matrix.identity();
+			
+			scale = autoFit ? videoFullScale : 1.0;
 
 			if (mirrorMode)
 			{
@@ -133,61 +169,72 @@ package hislope.filters.inputs
 			} else {
 				matrix.scale(scale, scale);
 			}
+			
+			super.updateParams();
 		}
+		
 		
 		override public function start():void
 		{
 			videoFile.start();
 			trace("video start");
-			
-			/*videoFile.addEventListener(VideoFile.BUFFER_EMPTY, hideBufferingIcon, false, 0, true);*/
-			/*videoFile.addEventListener(VideoFile.BUFFER_FULL, showBufferingIcon, false, 0, true);*/
-			/*videoFile.addEventListener(VideoFile.START, hideBufferingIcon, false, 0, true);*/
+			/*videoFile.addEventListener(Event.CHANGE, render, false, 0, true);*/
 		}
+		
 		
 		override public function stop():void
 		{
+			/*videoFile.removeEventListener(Event.CHANGE, render);*/
 			videoFile.stop();
 			trace("video stop");
 		}
 		
-		public function togglePlay():void
+		
+		public function togglePlay(event:Event = null):void
 		{
 			if (videoFile.isPlaying) stop(); else start();
 		}
 		
-		public function restart():void
+		
+		public function rewind(event:Event = null):void
 		{
-			videoFile.scrub(0);
+			videoFile.scrubPercent(0);
 		}
+		
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		
 		private function render(event:*):void
 		{
-			updateUI("position", videoFile.headPosition);
-			
 			_position = videoFile.headPosition;
+			updateUI("position", position);
 			
 			dispatchEvent(new Event(HiSlopeEvent.INPUT_RENDERED));
 			
-			updateUI("bufferLength", videoFile.bufferLengthPercent);
+			bufferLength = Number(videoFile.bufferLengthPercent.toFixed(1));
 		}
+
 		
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
 		
 		public function set position(value:Number):void
 		{
 			// current video
-			if (videoFile) videoFile.scrub(value);
+			if (videoFile) videoFile.scrubPercent(value);
 		}
+		
 		
 		public function get position():Number
 		{
 			return _position;
-			/*if (videoFile) return videoFile.headPosition;*/
-			/*return 0;*/
+		}
+		
+		
+		public function get videoTime():Number
+		{
+			if (videoFile) return videoFile.videoTime;
+			return -1;
 		}
 		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////

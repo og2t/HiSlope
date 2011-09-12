@@ -46,12 +46,12 @@ package hislope.filters.pixelbender.fx
 				name: "centerX",
 				min: 0,
 				max: 320,
-				current: 160
+				current: WIDTH / 2
 			}, {
 				name: "centerY",
 				min: 0,
 				max: 240,
-				current: 120
+				current: HEIGHT / 2
 			}, {
 				name: "aberration",
 				step: 0.01,
@@ -89,7 +89,7 @@ package hislope.filters.pixelbender.fx
 		
 		public function OldLens(OVERRIDE:Object = null)
 		{
-			super(pbjFile, PARAMETERS);
+			super(pbjFile);
 
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -100,7 +100,7 @@ package hislope.filters.pixelbender.fx
 		{
 			metaBmpData.applyShader(shaderFilter);
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void

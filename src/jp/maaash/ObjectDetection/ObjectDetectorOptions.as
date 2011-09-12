@@ -32,7 +32,8 @@
 //
 package jp.maaash.ObjectDetection
 {
-	public class ObjectDetectorOptions{
+	public class ObjectDetectorOptions
+	{
 		public static const SCALE_FACTOR      :Number = 1.2;
 		public static const MIN_SIZE          :int    = 15;
 		public static const MIN_MARGIN_SEARCH :int = 3;
@@ -48,6 +49,7 @@ package jp.maaash.ObjectDetection
 		public var search_mode :int    = SEARCH_MODE_NO_OVERLAP;	// about 50% speed up
 		public var scale_factor:Number = SCALE_FACTOR;
 		public var min_size    :int    = MIN_SIZE;
+		
 		public var startx      :int    = INVALID_POS;
 		public var starty      :int    = INVALID_POS;
 		public var endx        :int    = INVALID_POS;

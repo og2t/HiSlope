@@ -81,14 +81,16 @@ package hislope.filters.generators
 				type: "number"
 			}, {
 				name: "centerX",
-				current: 160,
+				current: WIDTH / 2,
 				max: 320,
-				type: "uint"
+				type: "uint",
+				lock: true
 			}, {
 				name: "centerY",
-				current: 120,
+				current: HEIGHT / 2,
 				max: 240,
-				type: "uint"
+				type: "uint",
+				lock: true
 			}, {
 				name: "foreground",
 				current: 0xFFFFFF,
@@ -108,7 +110,7 @@ package hislope.filters.generators
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		[Embed("../../pbj/Starburst.pbj", mimeType="application/octet-stream")]
+		[Embed("../../pbj/generators/Starburst.pbj", mimeType="application/octet-stream")]
 		private const pbjFile:Class;
 		
 		private var canvas:Shape = new Shape();
@@ -132,10 +134,12 @@ package hislope.filters.generators
 		
 		public function Starburst(OVERRIDE:Object = null)
 		{
-			super(pbjFile, PARAMETERS);
+			super(pbjFile);
 
 			timer = new Timer(int(1000 / fps));
 			timer.addEventListener(TimerEvent.TIMER, render);
+
+			fullShaderPrecision();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -152,12 +156,12 @@ package hislope.filters.generators
 			rotation += rotationSpeed;
 			shader.data.rotation.value = [rotation];
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void
 		{		
-			/*if (timer) timer.delay = int(1000 / fps);*/
+			if (timer) timer.delay = int(1000 / fps);
 			
 			shader.data.center.value = [centerX, centerY];
 			shader.data.period.value = [period];

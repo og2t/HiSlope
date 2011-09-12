@@ -181,7 +181,7 @@ package hislope.controllers
 			bufferCheckTimer.stop();
 		}
 		
-		public function scrub(percent:Number):void
+		public function scrubPercent(percent:Number):void
 		{
 			stream.seek(duration * percent);
 		}
@@ -269,8 +269,6 @@ package hislope.controllers
 		
 		private function netStatusHandler(event:NetStatusEvent):void
 		{
-			trace("!", event.info.code);
-			
 			switch (event.info.code)
 			{
 				case "NetStream.Play.Stop":
@@ -340,9 +338,9 @@ package hislope.controllers
 			return _loaded;
 		}
 		
-		public function get optionsPanel():DisplayObject
+		public function get videoTime():int
 		{
-			return null;
+			return stream.time;
 		}
 
 		// HELPERS ////////////////////////////////////////////////////////////////////////////

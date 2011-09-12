@@ -88,7 +88,7 @@ package hislope.filters.generators
 		
 		public function MetaBalls(OVERRIDE:Object = null)
 		{
-			super(pbjFile, PARAMETERS);
+			super(pbjFile);
 
 			timer = new Timer(int(1000 / fps));
 			timer.addEventListener(TimerEvent.TIMER, render);
@@ -137,7 +137,7 @@ package hislope.filters.generators
 			
 			i++;
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void

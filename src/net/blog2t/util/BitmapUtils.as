@@ -65,12 +65,11 @@ package net.blog2t.util
 			targetBmpData.applyFilter(targetBmpData, targetBmpData.rect, point, colorMatrixFilter);
 		}
 
+
 		/**
-		 * Desaturate color vector, by Paul Haeberli
-		 *	
-		 * http://www.graficaobscura.com/matrix/index.html
+		 * Desaturate color by rgb weights
 		 */
-		public static function desaturateDirect(targetBmpData:BitmapData):void
+		public static function desaturateWeighted(targetBmpData:BitmapData, rl:Number = 0.3086, gl:Number = 0.6094, bl:Number = 0.0820):void
 		{
 			targetBmpData.applyFilter(targetBmpData, targetBmpData.rect, point, new ColorMatrixFilter(
 				[rl, gl, bl, 0, 0,
@@ -79,7 +78,7 @@ package net.blog2t.util
 				 0,  0,  0,  1, 0]
 			));
 		}
-
+		
 
 		/**
 		 * Adjust brightness and constrast of bitmap 
@@ -116,7 +115,7 @@ package net.blog2t.util
 		 * @param	targetBmpData
 		 * @param	blur
 		 */
-		public static function blur(targetBmpData:BitmapData, blur:int = 0, quality:int = 2):void
+		public static function blur(targetBmpData:*, blur:int = 0, quality:int = 2):void
 		{
 			targetBmpData.applyFilter(targetBmpData, targetBmpData.rect, point, new BlurFilter(blur, blur, quality));
 		}

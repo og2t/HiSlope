@@ -98,7 +98,7 @@ package hislope.filters.pixelbender
 		{
 			metaBmpData.applyFilter(metaBmpData, rect, point, shaderFilter);
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -112,6 +112,8 @@ package hislope.filters.pixelbender
 				(keyColor & 0xff) / 256.0,
 				transparency
 			];
+			
+			super.updateParams();
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

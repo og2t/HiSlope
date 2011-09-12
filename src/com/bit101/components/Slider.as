@@ -44,6 +44,7 @@ package com.bit101.components
 		protected var _min:Number = 0;
 		protected var _orientation:String;
 		protected var _tick:Number = 1;
+		protected var _handleHeight:Number;
 		
 		public static const HORIZONTAL:String = "horizontal";
 		public static const VERTICAL:String = "vertical";
@@ -58,6 +59,9 @@ package com.bit101.components
 		public function Slider(orientation:String = Slider.HORIZONTAL, parent:DisplayObjectContainer = null, xpos:Number = 0, ypos:Number =  0, defaultHandler:Function = null)
 		{
 			_orientation = orientation;
+			
+			if (_orientation == Slider.VERTICAL) _handleHeight = 100; else _handleHeight = _width;
+			
 			super(parent, xpos, ypos);
 			if(defaultHandler != null)
 			{
@@ -133,7 +137,8 @@ package com.bit101.components
 			}
 			else
 			{
-				_handle.graphics.drawRect(1, 1, _width - 2, (_width - 2) * 1);
+				/*_handle.graphics.drawRect(1, 1, _width - 2, (_width - 2) * 1);*/
+				_handle.graphics.drawRect(1, 1, _width - 2, _handleHeight - 2);
 			}
 			_handle.graphics.endFill();
 			positionHandle();
@@ -170,8 +175,8 @@ package com.bit101.components
 			}
 			else
 			{
-				range = height - width;
-				_handle.y = _height - _width - (_value - _min) / (_max - _min) * range;
+				range = height - _handleHeight;
+				_handle.y = _height - _handleHeight - (_value - _min) / (_max - _min) * range;
 			}
 		}
 		
@@ -229,8 +234,8 @@ package com.bit101.components
 			{
 				_handle.y = mouseY - width / 2;
 				_handle.y = Math.max(_handle.y, 0);
-				_handle.y = Math.min(_handle.y, height - width);
-				_value = (_height - _width - _handle.y) / (height - width) * (_max - _min) + _min;
+				_handle.y = Math.min(_handle.y, height - _handleHeight);
+				_value = (_height - _handle.y - _handleHeight) / (height - _handleHeight) * (_max - _min) + _min;
 			}
 			dispatchEvent(new Event(Event.CHANGE));
 			
@@ -255,7 +260,7 @@ package com.bit101.components
 			}
 			else
 			{
-				_handle.startDrag(false, new Rectangle(0, 0, 0, height - width));
+				_handle.startDrag(false, new Rectangle(0, 0, 0, height - _handleHeight));
 			}
 		}
 		
@@ -283,7 +288,7 @@ package com.bit101.components
 			}
 			else
 			{
-				_value = (_height - _width - _handle.y) / (height - width) * (_max - _min) + _min;
+				_value = (_height - _handle.y - _handleHeight) / (height - _handleHeight) * (_max - _min) + _min;
 			}
 			if(_value != oldValue)
 			{

@@ -41,14 +41,20 @@ package hislope.core
 	import hislope.filters.FilterBase;
 	import hislope.filters.FilterBase;
 	import hislope.gui.FilterPanel;
+	import hislope.core.ChainStats;
+	import hislope.core.ChainFooter;
 
 	import flash.display.BitmapData;
 	import flash.display.Sprite;
+	import flash.display.Shape;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.events.KeyboardEvent;
 	import flash.utils.getTimer;
 	import flash.geom.Rectangle;
+	import flash.media.Sound;
+	
+	import flash.ui.Keyboard;
 	
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 		
@@ -57,25 +63,39 @@ package hislope.core
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 		
 		public static var _currentPanel:FilterPanel = null;
+		[Embed(source="../../assets/sounds/subtle.mp3")]
+		public static const UISound:Class;
 		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 		
     	private var numFilters:int;
         private var debugMode:Boolean;
-        private var filtersArray:Array;
+        
+		private var filtersArray:Vector.<FilterBase>;
 		private var filterPanelsArray:Array;
+		
 		private var filterPanel:FilterPanel;
+		
 		private var vSlider:VSlider;
-		private var panelsMask:Sprite = new Sprite();
-		private var sizeY:Number;
+		private var sliderHeight:Number;
+		private var visibleHeight:Number;
+		
 		private var scrollPosDest:Number = 0;
 		private var scrollPos:Number = 0;
-		private var panelsHolder:Sprite = new Sprite();
-		private var totalTime:Number = 0;
-		private var info:Label;
+		
 		private var fitPreview:Boolean;
+
+		private var testScreen:Sprite = new Sprite();
+		private var panelsBgrd:Shape = new Shape();	
+
+		private var panelsContainer:Sprite = new Sprite();
+		private var panelsHolder:Sprite = new Sprite();
+
+		private var chainStats:ChainStats;
+		private var chainFooter:ChainFooter;
 		
 		public var previewScale:Number = 1.0;
+		private var uiSound:Sound = new UISound();
 		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 
@@ -84,30 +104,38 @@ package hislope.core
 			processingWidth:int = 320,
 			processingHeight:int = 240,
 			debug:Boolean = true,
-			fitPreview:Boolean = true,
-			sizeY:int = 600
+			visibleHeight:int = -1,
+			fitPreview:Boolean = true
 		) {
 			this.name = name;
-			this.sizeY = sizeY;
 			
 			FilterBase.WIDTH = processingWidth;
 			FilterBase.HEIGHT = processingHeight;
-			
-			//TODO make sure preview is smaller than 320x240 when bigger
-			if (fitPreview) previewScale = FilterBase.PREVIEW_WIDTH / processingWidth;
 
             debugMode = debug;
+			this.visibleHeight = visibleHeight;
 			
-			if (debugMode) if (stage) init(); else addEventListener(Event.ADDED_TO_STAGE, init, false, 0, true);
 			
-			filtersArray = [];
+			
+			// TODO make sure preview is smaller than 320x240 when bigger
+			if (fitPreview) previewScale = FilterBase.PREVIEW_WIDTH / processingWidth;
+			
+			if (debugMode)
+			{
+				setStyles();
+				
+				if (stage) setupDebug(); else addEventListener(Event.ADDED_TO_STAGE, setupDebug, false, 0, true);
+				drawTestScreen(processingWidth, processingHeight);
+			}
+			
+			filtersArray = new Vector.<FilterBase>();
 			filterPanelsArray = [];
             numFilters = 0;
         }
 
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 
-        public function addFilter(filter:FilterBase, preview:Boolean = false, histogram:Boolean = false, showParams:Boolean = true, enabled:Boolean = true):void
+        public function addFilter(filter:FilterBase, preview:Boolean = true, histogram:Boolean = false, showParams:Boolean = true, enabled:Boolean = true):void
         {
 			trace("adding filter", filter);
 			
@@ -115,8 +143,9 @@ package hislope.core
 
 			if (debugMode)
 			{
+				filter.storeResult = true;
 				filterPanel = new FilterPanel(filter, previewScale);
-				panelsHolder.addChild(filterPanel);
+				panelsContainer.addChild(filterPanel);
 				filterPanelsArray.push(filterPanel);
 				filterPanel.addEventListener(FilterPanel.CHANGE_SIZE, renderPanels);
 				filterPanel.filterEnabled = enabled;
@@ -127,10 +156,11 @@ package hislope.core
 				filter.enabled = enabled;
 			}
 
-			filter.generatePreview = preview;
+			filter.displayPreview = preview;
 			
 			numFilters++;
         }
+
 
         public function removeFilter(enableOutput:Number):void
         {
@@ -138,45 +168,45 @@ package hislope.core
             numFilters--;
         }
 
+
 		public function renderPanels(event:Event = null):void
 		{
-			var offsetY:int = 20;
+			var offsetY:int = 0;
 			
 			for each (filterPanel in filterPanelsArray)
 			{
 				filterPanel.y = offsetY;
 				offsetY += filterPanel.height;
 			}
-			
-			vSlider.visible = (offsetY > sizeY);
-			if (!vSlider.visible)
+
+			vSlider.visible = (offsetY >= visibleHeight);
+
+			if (vSlider.visible)
 			{
-				panelsHolder.y = 0;
+				scrollPanels();
+			} else {
+				panelsContainer.y = 0;
 				vSlider.value = 1;
 			}
 			
-			// fill background
-			
-			panelsHolder.graphics.clear();
-			panelsHolder.graphics.beginFill(0x000000, 0.85);
-			panelsHolder.graphics.drawRect(0, 0, 320, offsetY);
+			panelsBgrd.height = offsetY;
 		}
 
         public function enableOutput():void
         {
         }
 
+
         public function disableOutput():void
         {
         }
 
+
         public function process(metaBmpData:MetaBitmapData):void
         {
-			/*metaBmpData.draw(testScreen);*/
-	
-			if (filtersArray.length == 0)
+			if (debugMode && filtersArray.length == 0)
 			{
-				info.text = this.name.toUpperCase() + " has no filters.";
+				chainStats.status = "has no filters.";
 				return;
 			}
 			
@@ -198,7 +228,9 @@ package hislope.core
 			
 			else
 			{
-				totalTime = 0;
+				var totalTime:int = 0;
+				
+				/*metaBmpData.draw(testScreen);*/
 				
 				do {
 					filter = filtersArray[filterId];
@@ -210,49 +242,66 @@ package hislope.core
 					totalTime += filterTime;
 				} while (filterId++ < numFilters - 1);
 				
-				info.text = this.name.toUpperCase() + " total: " + totalTime + " ms";
+				chainStats.chainTime = totalTime;
             }
         }
 
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 
-		private function init(event:Event = null):void
+		private function setupDebug(event:Event = null):void
 		{
-			vSlider = new VSlider(this, 320, 0, scrollPanels);
-			vSlider.setSize(10, sizeY);
+			chainStats = new ChainStats(name);
+			chainFooter = new ChainFooter();
+
+			if (visibleHeight == -1)
+			{
+				visibleHeight = stage.stageHeight;
+				stage.addEventListener(Event.RESIZE, stageResized, false, 0, true);
+			}
+			
+			sliderHeight = visibleHeight;
+			
+			vSlider = new VSlider(this, 321, 0, scrollPanels);
+			vSlider.setSize(10, sliderHeight);
 			vSlider.minimum = 0;
 			vSlider.maximum = 1;
 			vSlider.value = 1;
 			vSlider.tick = 0.01;
 			vSlider.backClick = true;
-			
-			stage.addEventListener(MouseEvent.MOUSE_WHEEL, mouseWheel, false, 0, true);
-		
-			panelsMask.graphics.beginFill(0x00ff00, 0.25);
-			panelsMask.graphics.drawRect(0, 0, 320, sizeY);
-		
-			addChild(panelsMask);
-			panelsHolder.mask = panelsMask;
 
 			addChild(panelsHolder);
 			
-			setStyles();
+			// fill background
+			panelsBgrd.graphics.clear();
+			panelsBgrd.graphics.beginFill(0x000000, 0.85);
+			panelsBgrd.graphics.drawRect(0, 0, 320, 100);
+
+			panelsHolder.addChild(panelsBgrd);
+			panelsHolder.addChild(panelsContainer);
 			
-			info = new Label(panelsHolder, 10, 0, "Filter Chain");
-			stage.addEventListener(KeyboardEvent.KEY_UP, keyDown, false, 0, true);
+			addChild(chainStats);
+			panelsHolder.y = ChainStats.HEIGHT;
+			
+			addChild(chainFooter);
+			
+			updatePostition();
+
+			addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 0, true);
+			stage.addEventListener(KeyboardEvent.KEY_UP, keyPressed, false, 0, true);
 			
 			stage.stageFocusRect = false;
 		}
 
+
 		private function scrollPanels(event:Event = null):void
 		{
 			addEventListener(Event.ENTER_FRAME, scroll, false, 0, true);
-			scrollPosDest = - (1 - vSlider.value) * (panelsHolder.height - sizeY);
+			scrollPosDest = - (1 - vSlider.value) * (panelsContainerHeight - visibleHeight);
 			
 			if (scrollPosDest > 0) scrollPosDest = 0;
-
 			if (!scrollPosDest) scrollPosDest = 0;
 		}
+
 		
 		private function scroll(event:Event):void
 		{
@@ -266,36 +315,36 @@ package hislope.core
 				removeEventListener(Event.ENTER_FRAME, scroll);
 			}
 			
-			panelsHolder.y = int(scrollPos);
+			panelsContainer.y = int(scrollPos);
 		}
 		
-		private function mouseWheel(event:MouseEvent):void
-		{
-			vSlider.value += event.delta * 0.001;
-			scrollPanels();
-		}
-
+		
 		public function get debug():Boolean
 		{
 			return debugMode;
 		}
+		
 		
 		public function set debug(value:Boolean):void
 		{
 			debugMode = value;
 		}
 		
+		
 		public static function set currentPanel(value:FilterPanel):void
 		{
 			if (_currentPanel) _currentPanel.deselectPanel();
+			
 			_currentPanel = value;
 			_currentPanel.selectPanel();
 		}
+		
 		
 		public static function get currentPanel():FilterPanel
 		{
 			return _currentPanel;
 		}
+		
 		
 		private function nextPanel():void
 		{
@@ -304,6 +353,7 @@ package hislope.core
 			currentPanel = filterPanelsArray[currentIndex];
 		}
 		
+		
 		private function prevPanel():void
 		{
 			var currentIndex:int = filterPanelsArray.indexOf(_currentPanel);
@@ -311,9 +361,25 @@ package hislope.core
 			currentPanel = filterPanelsArray[currentIndex];
 		}
 		
+		
+		private function updatePostition():void
+		{
+			visibleHeight = sliderHeight - (ChainStats.HEIGHT + ChainFooter.HEIGHT);
+			vSlider.height = sliderHeight;
+			chainFooter.y = sliderHeight - ChainFooter.HEIGHT;
+			panelsHolder.scrollRect = new Rectangle(0, 0, 320 + vSlider.width + 1, visibleHeight);
+		}
+		
+		
+		/**
+		 * Applies custom HiSlope colour theme for bit-101's MinimalComps
+		 */
 		private function setStyles():void
 		{
-			Style.BACKGROUND = 0x880000;
+			/*const MAIN_THEME:uint = 0x521965;*/
+			const MAIN_THEME:uint = 0x880000;
+			
+			Style.BACKGROUND = MAIN_THEME;
 			Style.HANDLE_FACE = 0xFFFFFF;
 			Style.BUTTON_FACE = 0x000000;
 			Style.INPUT_TEXT = 0xFFFFFF;
@@ -322,34 +388,43 @@ package hislope.core
 			Style.DROPSHADOW = 0x000000;
 			Style.PANEL = 0x000000;
 			Style.PROGRESS_BAR = 0xFFFFFF;
+			
+			Style.BUTTON_DOWN = 0xEEEEEE;
+			Style.TEXT_BACKGROUND = 0xFFFFFF;
+			Style.LIST_DEFAULT = 0x000000;
+			Style.LIST_ALTERNATE = MAIN_THEME;
+			Style.LIST_SELECTED = MAIN_THEME;
+			Style.LIST_ROLLOVER = 0xEE0000;
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		
-		private function keyDown(event:KeyboardEvent):void
+		private function onMouseWheel(event:MouseEvent):void
 		{
-			/*trace("key", event.keyCode);*/
+			vSlider.value += event.delta * 0.001;
+			scrollPanels();
+		}
+		
+		
+		private function stageResized(event:Event):void
+		{
+			sliderHeight = stage.stageHeight;
 			
+			updatePostition();
+			renderPanels();
+		}
+		
+		
+		private function keyPressed(event:KeyboardEvent):void
+		{
 			switch (event.keyCode)
 			{
-				case 38:
-					if (!event.altKey)
-					{
-						prevPanel();
-					} else {
-						vSlider.value += 0.1;
-						scrollPanels();
-					}
+				case Keyboard.UP:
+					prevPanel();
 				break;
 				
-				case 40:
-					if (!event.altKey)
-					{
-						nextPanel();
-					} else {
-						vSlider.value -= 0.1;
-						scrollPanels();
-					}
+				case Keyboard.DOWN:
+					nextPanel();
 				break;
 				
 				case 32:
@@ -361,29 +436,73 @@ package hislope.core
 			
 			switch (event.keyCode)
 			{
-				case 79:
+				case Keyboard.O:
 					currentPanel.filterEnabled = !currentPanel.filterEnabled;
-				break;
+					break;
 				
-				case 80:
+				case Keyboard.P:
 					currentPanel.previewVisible = !currentPanel.previewVisible;
-				break;
+					break;
 				
-				case 72:
+				case Keyboard.H:
 					currentPanel.histogramVisible = !currentPanel.histogramVisible;
+					break;
+					
+				case Keyboard.V:
+					currentPanel.debugVarsVisible = !currentPanel.debugVarsVisible;
 				break;
 				
-				case 37:
-					if (!event.altKey) currentPanel.hideParams();
-				break;
+				case Keyboard.LEFT:
+					//if (!event.altKey) 
+					currentPanel.hideParams();
+					break;
 				
-				case 39:
-					if (!event.altKey) currentPanel.showParams();
-				break;
+				case Keyboard.RIGHT:
+					//if (!event.altKey)
+					currentPanel.showParams();
+					break;
 			}
+			
+			/*uiSound.play();*/
 		}
 		
+		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
+		
+		override public function get width():Number
+		{
+			// panel width + slider
+			return 320 + 12;
+		}
+		
+		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
+
+		private function drawTestScreen(screenWidth:int, screenHeight:int):void
+		{
+			testScreen.graphics.beginFill(0x404040, 0);
+			testScreen.graphics.lineStyle(0, 0x808080, 1);
+			testScreen.graphics.drawRect(0, 0, screenWidth - 1, screenHeight - 1);
+			testScreen.graphics.endFill();
+			testScreen.graphics.moveTo(0, 0);
+			testScreen.graphics.lineTo(screenWidth - 1, screenHeight - 1);
+			testScreen.graphics.moveTo(screenWidth - 1, 0);
+			testScreen.graphics.lineTo(0, screenHeight - 1);
+		}
+		
+
+		public function get panelsContainerHeight():Number
+		{
+			var totalHeight:Number = 0;
+			var numPanels:int = panelsContainer.numChildren;
+			
+			while (--numPanels >= 0)
+			{
+				totalHeight += (panelsContainer.getChildAt(numPanels) as FilterPanel).height;
+			}
+			
+			return totalHeight;
+		}
+		
 
         override public function toString():String
         {

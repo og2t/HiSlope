@@ -1,0 +1,28 @@
+<languageVersion: 1.0;>
+
+kernel Gamma
+<   
+	namespace: "net.blog2t.filters";
+    vendor: "Tomek Augustyn / Og2t";
+    version: 1;
+    description: "Gamma";
+>
+{
+	parameter float gamma
+	< 
+	     defaultValue: float(1.0); 
+	     minValue: float(1.0);
+	     maxValue: float(3.0);
+	     description: "Gamma";
+	>;
+
+	input image4 srcPixel;
+	output pixel4 dstPixel;
+
+    void evaluatePixel()
+    {        
+        pixel4 srcPixel = sampleNearest(srcPixel, outCoord());
+        float inv = 1.0 / gamma;
+		dstPixel = pow(srcPixel, pixel4(inv, inv, inv, 1.0));
+    }
+}

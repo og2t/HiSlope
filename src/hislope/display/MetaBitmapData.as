@@ -31,15 +31,17 @@ package hislope.display
 {
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
-	import flash.display.BitmapData;
 	import flash.filters.BlurFilter;
 	import flash.geom.Matrix;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.geom.ColorTransform;
 	import flash.display.IBitmapDrawable;
+	import flash.display.BitmapData;
 	import flash.utils.ByteArray;
 	import hislope.filters.FilterBase;
+	
+	import hislope.vo.faceapi.FaceFeatures;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
@@ -53,12 +55,17 @@ package hislope.display
 		public var originalPoint:Point;
 		private var translationMatrix:Matrix;
 		
+		public var fullSizeBmpData:BitmapData;
+		public var faceFeatures:Vector.<FaceFeatures>;
+		public var trackedPoints:Vector.<Point>;
+		
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
 	
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 
 		public function MetaBitmapData(width:int = -1, height:int = -1, transparent:Boolean = true, fillColor:uint = 0xFFFFFFFF) 
 		{
+			// defaultage
 			if (width == -1 && height == -1)
 			{
 				width = FilterBase.WIDTH;
@@ -72,28 +79,18 @@ package hislope.display
 			_fillColor = fillColor;
 			
 			_roi = new Rectangle(0, 0, width, height);
+			
 			originalPoint = new Point();
 			translationMatrix = new Matrix();
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 		
-		public function getEmpty():MetaBitmapData
+		public function cloneAsMeta():MetaBitmapData
 		{
 			return new MetaBitmapData(width, height, transparent, _fillColor);
 		}
 		
-		/*override public function clone():BitmapData
-		{
-			throw new Error("Use MetaBitmapData.getClone()");
-			return null;//new MetaBitmapData(width, height, transparent, _fillColor);
-		}*/
-		
-		// FIXME WTF about these methods?
-		public function getClone():MetaBitmapData
-		{
-			return new MetaBitmapData(width, height, transparent, _fillColor);
-		}
 		
 		public function pasteAreaTo(targetBmpData:MetaBitmapData, area:Rectangle):MetaBitmapData
 		{
@@ -116,11 +113,13 @@ package hislope.display
 			return targetBmpData;
 		}
 		
+		
 		public function drawActiveAreaTo(targetBmpData:MetaBitmapData, destPoint:Point = null):void
 		{
 			if (destPoint) targetBmpData.copyPixels(this, _roi, destPoint);
 			else targetBmpData.copyPixels(this, _roi, originalPoint);
 		}
+		
 		
 		/*public function drawInPlace(source:IBitmapDrawable):void
 		{
@@ -128,6 +127,7 @@ package hislope.display
 			translationMatrix.translate(originalPoint.x, originalPoint.y);
 			super.draw(source, translationMatrix);
 		}*/
+		
 		
 		public function copyTo(targetBmpData:*):void
 		{
@@ -145,19 +145,28 @@ package hislope.display
 			}
 		}
 		
-		public function processFilter(filter:*):void
-		{
-			if (_roi) return super.applyFilter(this, _roi, _roi.topLeft, filter);
-			return super.applyFilter(this, rect, rect.topLeft, filter);
-		}
+		// seems slower
+		/*public function processFilter(filter:*):void
+			{
+				if (_roi) super.applyFilter(this, _roi, _roi.topLeft, filter);
+				super.applyFilter(this, rect, rect.topLeft, filter);
+			}
+		*/	
 		
 		// FIXME Flash bug when appling Shader to a portion of a BitmapData 
 		public function applyShader(shaderFilter:*):void
 		{
-			if (_roi) return super.applyFilter(this, new Rectangle((width - _roi.width) / 2, (height - _roi.height) / 2, 0, 0), new Point(), shaderFilter);
-			return super.applyFilter(this, rect, rect.topLeft, shaderFilter);
-			//return super.applyFilter(this, rect, new Point(), shaderFilter);
+			// can't use here as input variable might be different for each Kernel
+			/*shaderFilter.shader.data.srcPixel.input = this;
+			var job:ShaderJob = new ShaderJob(shader, this as BitmapData, width, height);
+			job.start(true);*/
+			
+			// buggy
+			/*if (_roi) super.applyFilter(this, new Rectangle((width - _roi.width) / 2, (height - _roi.height) / 2, 0, 0), new Point(), shaderFilter);*/
+			super.applyFilter(this, rect, rect.topLeft, shaderFilter);
+			//super.applyFilter(this, rect, new Point(), shaderFilter);
 		}
+		
 		
 		public function get roi():Rectangle
 		{
@@ -165,10 +174,12 @@ package hislope.display
 			return rect;
 		}
 		
+		
 		public function set roi(value:Rectangle):void
 		{
 			_roi = value;
 		}
+		
 		
 		public function resetROI():void
 		{
@@ -177,6 +188,7 @@ package hislope.display
 			_roi.width = width;
 			_roi.height = height;
 		}
+		
 		
 		/*public function set rect(value:Rectangle):void
 		{
@@ -188,29 +200,12 @@ package hislope.display
 			return _roi;
 		}*/
 		
-		/*public function get activeRect():Rectangle
-		{
-			if (_roi) return _roi.clone();
-			return null;
-		}
-		
-		public function set activeRect(value:Rectangle):void
-		{
-			_roi = value;
-		}*/
-		
-		public function blur(blur:int = 0, quality:int = 2):void
-		{
-			trace(_roi);
-			
-			super.applyFilter(this, _roi, _roi.topLeft, new BlurFilter(blur, blur, quality));
-			/*super.applyFilter(this, rect, point, new BlurFilter(blur, blur, quality));*/
-		}
 		
 		public function fill(color:uint):void
 		{
 			super.fillRect(rect, color);
 		}
+		
 		
 		public function clear():void
 		{

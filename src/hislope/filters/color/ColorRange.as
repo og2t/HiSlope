@@ -99,7 +99,7 @@ package hislope.filters.color
 		public function ColorRange(OVERRIDE:Object = null)
 		{
 			activeBmpData = resultMetaBmpData.clone();
-			sourceBmpData = resultMetaBmpData.getClone();
+			sourceBmpData = resultMetaBmpData.cloneAsMeta();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -108,20 +108,19 @@ package hislope.filters.color
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
-			/*if (metaBmpData.activeRect)
+			/*if (metaBmpData.faceRect)
 				{
 					//metaBmpData.copyTo(sourceBmpData);
-					activePixels = metaBmpData.getPixels(metaBmpData.activeRect);
+					activePixels = metaBmpData.getPixels(metaBmpData.faceRect);
 					activePixels.position = 0;
 					metaBmpData.fillRect(new Rectangle(0, 0, metaBmpData.width, metaBmpData.height), 0x7f0000);
-					metaBmpData.setPixels(metaBmpData.activeRect, activePixels);
+					metaBmpData.setPixels(metaBmpData.faceRect, activePixels);
 					restrictToRegion(metaBmpData);
 				} else {
 					//copy metaBmpData to activeBmpData
 				}*/
 
 			/*BitmapUtils.blur(metaBmpData, blur);*/
-			/*metaBmpData.blur(blur);*/
 			metaBmpData.applyFilter(metaBmpData, rect, point, new BlurFilter(blur, blur, 2));
 			
 			/*activeBmpData.lock();
@@ -144,10 +143,10 @@ package hislope.filters.color
 			metaBmpData.threshold(metaBmpData, rect, point, "==", 0xff000000, 0xffffffff, 0xff000000, true);
 			metaBmpData.unlock();
 
-			//sourceBmpData.copyPixels(activeBmpData, metaBmpData.activeRect, metaBmpData.activeRect.topLeft);
+			//sourceBmpData.copyPixels(activeBmpData, metaBmpData.faceRect, metaBmpData.faceRect.topLeft);
 
-			getPreviewFor(metaBmpData);
-			/*getPreviewFor(sourceBmpData as MetaBitmapData);*/
+			postPreview(metaBmpData);
+			/*postPreview(sourceBmpData as MetaBitmapData);*/
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -164,6 +163,8 @@ package hislope.filters.color
 			rmax = (rgbMax >> 16) & 0xff;
 			gmax = (rgbMax >> 8) & 0xff;
 			bmax = rgbMax  & 0xff;
+			
+			super.updateParams();
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

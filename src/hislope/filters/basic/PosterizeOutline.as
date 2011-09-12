@@ -32,7 +32,7 @@ package hislope.filters.basic
 	// IMPORTS ////////////////////////////////////////////////////////////////////////////////
 
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import net.blog2t.util.BitmapUtils;
 	import hislope.display.MetaBitmapData;
 	import flash.filters.GlowFilter;
@@ -130,7 +130,7 @@ package hislope.filters.basic
 			
 			metaBmpData.copyPixels(linesBmpData, rect, point);
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -140,6 +140,8 @@ package hislope.filters.basic
 			greys = Math.pow(2, levels);
 			step = (0xff + 1) / greys;
 			paletteMap.discretize(greys);
+			
+			super.updateParams();
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

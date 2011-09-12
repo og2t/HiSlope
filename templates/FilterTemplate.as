@@ -40,6 +40,7 @@ package hislope.filters // filter path
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
+		public static const INFO:String = "Filter Info / comments";
 		private static const NAME:String = "Filter Name";
 		private static const PARAMETERS:Array = [
 			{
@@ -78,7 +79,7 @@ package hislope.filters // filter path
 		
 		public function FilterName(OVERRIDEN:Object = null)
 		{
-			// init your bitmaps, variables, etc. here
+			// init your additional bitmapDatas, variables, etc. here
 			
 			time = 0;
 			frames = 0;
@@ -95,12 +96,14 @@ package hislope.filters // filter path
 			time += param1;
 			frames += param2;
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void
 		{
 			// update parameters if changed
+			
+			super.updateParams();
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////

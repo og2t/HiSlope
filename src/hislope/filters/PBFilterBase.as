@@ -3,8 +3,8 @@
 	[AS3] PBFilterBase
 	=======================================================================================
 
-	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
-	http://play.blog2t.net/hislope
+	HiSlope toolkit copyright (c) 2008-2011 Tomek 'Og2t' Augustyn
+	http://play.blog2t.net/HiSlope
 
 	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
@@ -35,6 +35,7 @@ package hislope.filters
 	import flash.display.Shader;
 	import flash.filters.ShaderFilter;
 	import flash.display.ShaderParameter;
+	import flash.display.ShaderPrecision;
 	import flash.utils.ByteArray;
 	import hislope.core.Utils;
 
@@ -56,12 +57,19 @@ package hislope.filters
 			shader = new Shader(new pbjFile() as ByteArray);
 			shaderFilter = new ShaderFilter(shader);
 			
-			if (PARAMETERS) Utils.autoDetectKernelParams(shader, PARAMETERS, shaderParams);
+			shader.precisionHint = ShaderPrecision.FAST;
+			
+			/*if (PARAMETERS) Utils.autoDetectKernelParams(shader, PARAMETERS, shaderParams);*/
 			
 			super();
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
+		
+		public function fullShaderPrecision():void
+		{
+			shader.precisionHint = ShaderPrecision.FULL;
+		}
 		
 		public function updateShaderParams(PARAMETERS:Array):void
 		{

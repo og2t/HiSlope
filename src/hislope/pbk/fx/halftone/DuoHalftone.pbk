@@ -1,0 +1,95 @@
+<languageVersion:1.0;>
+
+kernel HalftoneColor
+<   
+	namespace : "net.blog2t.filters";
+    vendor : "Tomek Augustyn / Og2t";
+    version : 1;
+    description : "True Halftone with Color (DuoHalftone)";
+>
+{
+
+parameter float dotSize 
+< 
+     defaultValue: float(3.0); 
+     minValue: float(0.0); 
+     maxValue: float(50.0);
+     description: "Size of the dot";
+>;
+
+parameter float threshold
+< 
+     defaultValue: float(0.9); 
+     minValue: float(0.0);
+     maxValue: float(1.0);
+     description: "Threshold Strength";
+>;
+
+parameter float angle 
+< 
+     defaultValue: float(45.0); 
+     minValue: float(0.0); 
+     maxValue: float(90.0);
+     description: "Start Angle";
+>;
+
+parameter float2 rotationCenter
+<
+     minValue: float2(0.0,0.0);
+     maxValue: float2(2048.0, 2048.0);
+     defaultValue: float2(150.0,150.0);
+     description: "Raster pattern rotation center";
+>;
+
+parameter float3 foreground
+<
+	minValue: float3(0.0, 0.0, 0.0);
+	maxValue: float3(1.0, 1.0, 1.0);
+	defaultValue: float3(1.0, 1.0, 1.0);
+>;
+
+parameter float3 background
+<
+	minValue: float3(0.0, 0.0, 0.0);
+	maxValue: float3(1.0, 1.0, 1.0);
+	defaultValue: float3(0.0, 0.0, 0.0);
+>;
+
+input image4 srcPixel;
+output pixel4 dstPixel;
+
+#define PI 3.1415926535897932384626433832795
+#define PI180 0.0174532925199
+
+#define sind(a) sin(float(a) * PI180)
+#define cosd(a) cos(float(a) * PI180)
+
+#define added(sh,sa,ca,c,d) 0.5 + 0.25 * cos((sh.x * sa + sh.y * ca + c.x) * d) + 0.25 * cos((sh.x * ca - sh.y * sa + c.y) * d);
+
+    void evaluatePixel()
+    {        
+        float2 srcCoord = outCoord();
+        float2 shift = srcCoord - rotationCenter;
+        pixel4 raster;
+ 
+        float piDot = PI / dotSize;
+
+        pixel4 rasterPattern;
+ 
+        rasterPattern.r = added(shift, sind(angle), cosd(angle), rotationCenter, piDot);
+        
+        pixel4 srcPixel = sampleNearest(srcPixel, srcCoord);
+        
+        float avg = 0.2125 * srcPixel.r + 0.7154 * srcPixel.g + 0.0721 * srcPixel.b;
+        float gray = clamp((rasterPattern.r * threshold + avg - threshold) / (1.0 - threshold), 0.0, 1.0);
+        
+        dstPixel.r = mix(background.r, foreground.r, gray);
+        dstPixel.g = mix(background.g, foreground.g, gray);
+        dstPixel.b = mix(background.b, foreground.b, gray);
+        dstPixel.a = 1.0;
+
+        // uncomment to see how the raster pattern looks 
+        //rasterPattern.a = 1.0; dstPixel = rasterPattern;
+    }
+}
+    

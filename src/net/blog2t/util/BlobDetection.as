@@ -5,6 +5,9 @@
 
 	VERSION HISTORY:
 	v0.1	Born on 2009-07-17
+	
+	IDEA BASED ON:
+		http://faces.bascule.co.jp/motiondetection/
 
 	USAGE:
 

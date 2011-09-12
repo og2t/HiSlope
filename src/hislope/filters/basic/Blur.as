@@ -52,11 +52,10 @@ package hislope.filters.basic
 				type: "number"
 			}, {
 				name: "quality",
-				label: "quality",
 				current: 2,
 				min: 1,
 				max: 3,
-				type: "int"
+				type: "stepper"
 			}
 		];
 
@@ -84,7 +83,7 @@ package hislope.filters.basic
 		{
 			metaBmpData.applyFilter(metaBmpData, rect, point, blurFilter);
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -93,6 +92,8 @@ package hislope.filters.basic
 		{
 			blurFilter.blurX = blurFilter.blurY = amount;
 			blurFilter.quality = quality;
+			
+			super.updateParams();
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

@@ -1,11 +1,11 @@
 /**
  * Knob.as
  * Keith Peters
- * version 0.97
+ * version 0.102
  * 
  * A knob component for choosing a numerical value.
  * 
- * Copyright (c) 2009 Keith Peters
+ * Copyright (c) 2010 Keith Peters
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,17 +35,23 @@
 	
 	public class Knob extends Component
 	{
-		private var _knob:Sprite;
-		private var _label:Label;
-		private var _labelText:String = "";
-		private var _max:Number = 100;
-		private var _min:Number = 0;
-		private var _mouseRange:Number = 100;
-		private var _precision:int = 1;
-		private var _radius:Number = 20;
-		private var _startY:Number;
-		private var _value:Number = 0;
-		private var _valueLabel:Label;
+		public static const VERTICAL:String = "vertical";
+		public static const HORIZONTAL:String = "horizontal";
+		public static const ROTATE:String = "rotate";
+		
+		protected var _knob:Sprite;
+		protected var _label:Label;
+		protected var _labelText:String = "";
+		protected var _max:Number = 100;
+		protected var _min:Number = 0;
+		protected var _mode:String = VERTICAL;
+		protected var _mouseRange:Number = 100;
+		protected var _precision:int = 1;
+		protected var _radius:Number = 20;
+		protected var _startX:Number;
+		protected var _startY:Number;
+		protected var _value:Number = 0;
+		protected var _valueLabel:Label;
 		
 		
 		/**
@@ -82,7 +88,7 @@
 			_knob = new Sprite();
 			_knob.buttonMode = true;
 			_knob.useHandCursor = true;
-			_knob.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+			_knob.addEventListener(MouseEvent.MOUSE_DOWN, onMouseGoDown);
 			addChild(_knob);
 			
 			_label = new Label();
@@ -96,7 +102,6 @@
 		
 		/**
 		 * Draw the knob at the specified radius.
-		 * @param radius The radius with which said knob will be drawn.
 		 */
 		protected function drawKnob():void
 		{
@@ -105,7 +110,7 @@
 			_knob.graphics.drawCircle(0, 0, _radius);
 			_knob.graphics.endFill();
 			
-			_knob.graphics.beginFill(Style.HANDLE_FACE);
+			_knob.graphics.beginFill(Style.BUTTON_FACE);
 			_knob.graphics.drawCircle(0, 0, _radius - 2);
 			_knob.graphics.endFill();
 			
@@ -114,8 +119,8 @@
 			_knob.graphics.drawRect(_radius, -s, s*1.5, s * 2);
 			_knob.graphics.endFill();
 			
-			_knob.x = _radius;
-			_knob.y = _radius + 20;
+			/*_knob.x = _radius;*/
+			/*_knob.y = _radius + 20;*/
 			updateKnob();
 		}
 		
@@ -173,7 +178,7 @@
 			}
 			_valueLabel.text = val;
 			_valueLabel.draw();
-			_valueLabel.x = width / 2 - _valueLabel.width / 2;
+			/*_valueLabel.x = width / 2 - _valueLabel.width / 2;*/
 		}
 		
 		///////////////////////////////////
@@ -209,39 +214,71 @@
 		/**
 		 * Internal handler for when user clicks on the knob. Starts tracking up/down motion of the mouse.
 		 */
-		protected function onMouseDown(event:MouseEvent):void
+		protected function onMouseGoDown(event:MouseEvent):void
 		{
+			_startX = mouseX;
 			_startY = mouseY;
-			stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
-			stage.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+			stage.addEventListener(MouseEvent.MOUSE_MOVE, onMouseMoved);
+			stage.addEventListener(MouseEvent.MOUSE_UP, onMouseGoUp);
 		}
 		
 		/**
 		 * Internal handler for mouse move event. Updates value based on how far mouse has moved up or down.
 		 */
-		protected function onMouseMove(event:MouseEvent):void
+		protected function onMouseMoved(event:MouseEvent):void
 		{
-			var oldValue:Number = _value;
-			var diff:Number = _startY - mouseY;
-			var range:Number = _max - _min;
-			var percent:Number = range / _mouseRange;
-			_value += percent * diff;
-			correctValue();
-			if(_value != oldValue)
+			if(_mode == ROTATE)
 			{
-				updateKnob();
-				dispatchEvent(new Event(Event.CHANGE));
+				var angle:Number = Math.atan2(mouseY - _knob.y, mouseX - _knob.x);
+				var rot:Number = angle * 180 / Math.PI - 135;
+				while(rot > 360) rot -= 360;
+				while(rot < 0) rot += 360;
+				if(rot > 270 && rot < 315) rot = 270;
+				if(rot >= 315 && rot <= 360) rot = 0;
+				_value = rot / 270 * (_max - _min) + _min;
+				
+				_knob.rotation = rot + 135;
+				formatValueLabel();
 			}
-			_startY = mouseY;
+			else if(_mode == VERTICAL)
+			{
+				var oldValue:Number = _value;
+				var diff:Number = _startY - mouseY;
+				var range:Number = _max - _min;
+				var percent:Number = range / _mouseRange;
+				_value += percent * diff;
+				correctValue();
+				if(_value != oldValue)
+				{
+					updateKnob();
+					dispatchEvent(new Event(Event.CHANGE));
+				}
+				_startY = mouseY;
+			}
+			else if(_mode == HORIZONTAL)
+			{
+				oldValue = _value;
+				diff = _startX - mouseX;
+				range = _max - _min;
+				percent = range / _mouseRange;
+				_value -= percent * diff;
+				correctValue();
+				if(_value != oldValue)
+				{
+					updateKnob();
+					dispatchEvent(new Event(Event.CHANGE));
+				}
+				_startX = mouseX;
+			}
 		}
 		
 		/**
 		 * Internal handler for mouse up event. Stops mouse tracking.
 		 */
-		protected function onMouseUp(event:MouseEvent):void
+		protected function onMouseGoUp(event:MouseEvent):void
 		{
-			stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMove);
-			stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+			stage.removeEventListener(MouseEvent.MOUSE_MOVE, onMouseMoved);
+			stage.removeEventListener(MouseEvent.MOUSE_UP, onMouseGoUp);
 		}
 		
 		
@@ -339,5 +376,25 @@
 		{
 			return _labelText;
 		}
-	}
+
+		public function set mode(value:String):void
+		{
+			_mode = value;
+		}
+		public function get mode():String
+		{
+			return _mode;
+		}
+
+        public function get radius():Number
+        {
+            return _radius;
+        }
+
+        public function set radius(value:Number):void
+        {
+            _radius = value;
+            invalidate();
+        }
+    }
 }

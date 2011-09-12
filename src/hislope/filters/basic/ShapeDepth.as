@@ -37,7 +37,7 @@ package hislope.filters.basic
 
 	import hislope.display.MetaBitmapData;
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import net.blog2t.util.BitmapUtils;
 	import net.blog2t.util.BlobDetection;
 	
@@ -108,7 +108,7 @@ package hislope.filters.basic
 		public function ShapeDepth(OVERRIDE:Object = null)
 		{
 			activeBmpData = resultMetaBmpData.clone();
-			sourceBmpData = resultMetaBmpData.getClone();
+			sourceBmpData = resultMetaBmpData.cloneAsMeta();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -125,14 +125,14 @@ package hislope.filters.basic
 			outline.graphics.clear();
 			outline.graphics.lineStyle(0, 0xff0000, 0.25);
 			
-			if (metaBmpData.activeRect)
+			if (metaBmpData.faceRect)
 			{
-				activePixels = sourceBmpData.getPixels(metaBmpData.activeRect);
+				activePixels = sourceBmpData.getPixels(metaBmpData.faceRect);
 				activePixels.position = 0;
 				activeBmpData.fillRect(new Rectangle(0, 0, sourceBmpData.width, sourceBmpData.height), 0x7f0000);
-				activeBmpData.setPixels(metaBmpData.activeRect, activePixels);
+				activeBmpData.setPixels(metaBmpData.faceRect, activePixels);
 				
-				outline.graphics.drawRect(metaBmpData.activeRect.x, metaBmpData.activeRect.y, metaBmpData.activeRect.width, metaBmpData.activeRect.height);
+				outline.graphics.drawRect(metaBmpData.faceRect.x, metaBmpData.faceRect.y, metaBmpData.faceRect.width, metaBmpData.faceRect.height);
 			}
 
 			blobRects = [];
@@ -146,13 +146,13 @@ package hislope.filters.basic
 			metaBmpData.blobRects = blobRects;
 			metaBmpData.oversizedBlobRects = oversizedBlobRects;
 			
-			if (metaBmpData.activeRect)
+			if (metaBmpData.faceRect)
 			{
-				if (!metaBmpData.activeRect.isEmpty())
+				if (!metaBmpData.faceRect.isEmpty())
 				{
-					centerDestX = metaBmpData.activeRect.x + metaBmpData.activeRect.width / 2;
-					centerDestY = metaBmpData.activeRect.y + metaBmpData.activeRect.height / 2;
-					spotRadiusDest = Math.max(metaBmpData.activeRect.width, metaBmpData.activeRect.height) / 2;
+					centerDestX = metaBmpData.faceRect.x + metaBmpData.faceRect.width / 2;
+					centerDestY = metaBmpData.faceRect.y + metaBmpData.faceRect.height / 2;
+					spotRadiusDest = Math.max(metaBmpData.faceRect.width, metaBmpData.faceRect.height) / 2;
 				} else {
 					spotRadiusDest = 0;
 				}
@@ -173,7 +173,7 @@ package hislope.filters.basic
 				
 			sourceBmpData.draw(outline);
 			
-			getPreviewFor(sourceBmpData);
+			postPreview(sourceBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -181,6 +181,8 @@ package hislope.filters.basic
 		override public function updateParams():void
 		{			
 			paletteMap.posterize(levels);
+			
+			super.updateParams();
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

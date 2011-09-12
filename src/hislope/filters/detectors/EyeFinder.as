@@ -147,7 +147,7 @@ package hislope.filters.detectors
 		public function EyeFinder(OVERRIDE:Object = null) 
 		{
 			activeBmpData = resultMetaBmpData.clone();
-			sourceBmpData = resultMetaBmpData.getClone();
+			sourceBmpData = resultMetaBmpData.cloneAsMeta();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -158,9 +158,9 @@ package hislope.filters.detectors
 		{
 			metaBmpData.copyTo(sourceBmpData);
 			
-			if (metaBmpData.activeRect)
+			if (metaBmpData.faceRect)
 			{
-				eyeArea = metaBmpData.activeRect.clone();
+				eyeArea = metaBmpData.faceRect.clone();
 				eyeArea.inflate(eyeAreaDeflationX, eyeAreaDeflationY);
 				eyeArea.height = int(eyeArea.height * eyeAreaHeight);
 
@@ -222,7 +222,7 @@ package hislope.filters.detectors
 				//copy metaBmpData to activeBmpData
 				}*/
 
-				getPreviewFor(sourceBmpData);
+				postPreview(sourceBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -239,6 +239,8 @@ package hislope.filters.detectors
 			rmax = (rgbMax >> 16) & 0xff;
 			gmax = (rgbMax >> 8) & 0xff;
 			bmax = rgbMax  & 0xff;
+			
+			super.updateParams();
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

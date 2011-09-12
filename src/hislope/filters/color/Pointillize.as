@@ -133,7 +133,7 @@ package hislope.filters.color
 			
 			output.graphics.clear();
 			
-			for each (var p:Object in particles)
+			for each (p in particles)
 			{
 				output.graphics.beginFill(p.pc, p.pa);
 				output.graphics.drawCircle(p.px, p.py, p.pz);
@@ -145,13 +145,9 @@ package hislope.filters.color
 			metaBmpData.draw(output);
 			metaBmpData.unlock();
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
-		override public function updateParams():void
-		{
-			// update parameters if changed
-		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 		

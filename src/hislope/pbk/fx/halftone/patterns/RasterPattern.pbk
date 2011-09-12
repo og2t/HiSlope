@@ -1,0 +1,75 @@
+<languageVersion: 1.0;>
+
+kernel RasterPattern
+<   
+	namespace: "net.blog2t.filters";
+    vendor: "Tomek Augustyn / Og2t";
+    version: 1;
+    description: "Halftone Raster Pattern Generator";
+>
+{
+
+	parameter float dotSize 
+	< 
+	     defaultValue: float(3.0); 
+	     minValue: float(0.0); 
+	     maxValue: float(50.0);
+	     description: "Dot size";
+	>;
+
+	parameter float angle 
+	< 
+	     defaultValue: float(45.0); 
+	     minValue: float(0.0); 
+	     maxValue: float(90.0);
+	     description: "Angle";
+	>;
+
+	parameter float2 rotationCenter
+	<
+	     minValue: float2(0.0,0.0);
+	     maxValue: float2(2048.0, 2048.0);
+	     defaultValue: float2(150.0, 150.0);
+	     description: "Rotation Center";
+	>;
+
+	#if !AIF_FLASH_TARGET
+
+		parameter float2 size
+		<
+			minValue: float2(0, 0);
+			maxValue: float2(1024, 1024);
+			defaultValue: float2(640.0, 480.0);
+		>;
+
+		region generated()
+		{
+			return region(float4(0, 0, size.x, size.y));
+		}
+
+	#endif
+
+output pixel4 dstPixel;
+
+#define PI 3.1415926535897932384626433832795
+#define PI180 0.0174532925199
+
+#define sind(a) sin(float(a) * PI180)
+#define cosd(a) cos(float(a) * PI180)
+
+#define add(sh,sa,ca,c,d) 0.5 + 0.25 * cos((sh.x * sa + sh.y * ca + c.x) * d) + 0.25 * cos((sh.x * ca - sh.y * sa + c.y) * d);
+#define stripes(sh,sa,ca,c,d) 0.5 + 0.5 * sin((sh.x * sa + sh.y * ca + c.x) * d);
+
+
+    void evaluatePixel()
+    {        
+        float2 srcCoord = outCoord();
+        float2 shift = srcCoord - rotationCenter; 
+        float piDot = PI / dotSize;
+
+        float rasterPattern = add(shift, sind(angle), cosd(angle), rotationCenter, piDot);
+        //float rasterPattern = stripes(shift, sind(angle), cosd(angle), rotationCenter, piDot);
+        
+        dstPixel.rgba = pixel4(rasterPattern, rasterPattern, rasterPattern, 1.0);
+    }
+}

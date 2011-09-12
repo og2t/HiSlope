@@ -55,18 +55,31 @@ package hislope.filters.inputs
 	{
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
-		private static const MAX_WIDTH:int = 640;
-		private static const MAX_HEIGHT:int = 480;
+		public static const MAX_WIDTH:int = 640;
+		public static const MAX_HEIGHT:int = 480;
 
 		private static const NAME:String = "WebCam";
-		private static const PARAMETERS:Array = [
+		private static var PARAMETERS:Array = [
 			{
+				name: "cameraIndex",
+				min: 0,
+				type: "stepper"
+			}, {
 				name: "fps",
-				label: "fps",
 				current: 25,
 				min: 0.1,
 				max: 60,
 				type: "number"
+			}, {
+				name: "cameraFPS",
+				current: 30,
+				min: 1,
+				max: 40,
+				type: "number"
+			}, {
+				name: "capFPS",
+				current: false,
+				type: "boolean"
 			}, {
 				name: "scale",
 				label: "processing scale",
@@ -75,21 +88,27 @@ package hislope.filters.inputs
 				max: 1.0,
 				type: "number"
 			}, {
-				name: "mirrorMode",
-				label: "mirror",
+				name: "autoFit",
+				label: "auto fit width",
+				current: true,
+				type: "boolean"
+			}, {
+				name: "flipX",
+				current: true,
+				type: "boolean"
+			}, {
+				name: "flipY",
 				current: false,
 				type: "boolean"
 			}, {
 				name: "backgroundColor",
-				label: "background color",
 				type: "rgb"
 			}, {
-				label: "refresh camera",
-				callback: "refreshCamera",
+				label: "restart camera",
+				callback: "restartCamera",
 				type: "button"
 			}, {
 				name: "bandwidth",
-				label: "bandwidth",
 				current: 16384,
 				min: 0,
 				max: 65535,
@@ -134,34 +153,49 @@ package hislope.filters.inputs
 				type: "boolean"
 			}, {
 				label: "show settings",
-				callback: "showSettings",
+				callback: "showCameraSettings",
 				type: "button"
 			}
 		];
 		
 		private static const DEBUG_VARS:Array = [
+			"cameraName",
+			"currentFPS",
 			"cameraActivity",
-			"activityDetected"
+			"activityDetected",
+			"cameraWidth",
+			"cameraHeight"
 		];
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
 		private var video:Video;
 		private var camera:Camera;
+		
 		private var matrix:Matrix = new Matrix();
 		private var timer:Timer;
 		private var cameraBmpData:BitmapData;
 		private var fullSizeBmpData:BitmapData;
+		
+		private var fullScale:Number;
 
 		// PARAMETERS /////////////////////////////////////////////////////////////////////////
 		
 		public var fps:int;
-		public var mirrorMode:Boolean;
+		public var cameraFPS:int;
+		public var capFPS:Boolean;
+		public var flipX:Boolean;
+		public var flipY:Boolean;
 		public var scale:Number;
+		public var autoFit:Boolean;
 		public var backgroundColor:uint;
+		public var cameraIndex:int;
+		public var cameraName:String;
 		
 		public var cameraWidth:int = WebCam.MAX_WIDTH;
 		public var cameraHeight:int = WebCam.MAX_HEIGHT;
+		
+		public var currentFPS:Number;
 		public var cameraFavourArea:Boolean;
 		public var cameraActivity:Number;
 		public var activityDetected:Boolean;
@@ -173,40 +207,60 @@ package hislope.filters.inputs
 		public var quality:int; 
 		public var keyFrameInterval:int;
 		public var compressFrames:Boolean;
-			
+		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
 		public function WebCam(OVERRIDE:Object = null)
 		{
-			init(NAME, PARAMETERS, OVERRIDE, DEBUG_VARS);
-			
+			const numCameras:int = Camera.names.length;
+
+			cameraIndex = 0;
+			if (numCameras == 1) setDefaultMacCam();
+
+			// FIXME: hacky way of setting default params
+			PARAMETERS[0].max = numCameras - 1;
+			PARAMETERS[0].current = cameraIndex;
+
 			video = new Video(cameraWidth, cameraHeight);
+			fullScale = WIDTH / cameraWidth;
+			
+			init(NAME, PARAMETERS, OVERRIDE, DEBUG_VARS);
 			
 			cameraBmpData = new BitmapData(WebCam.MAX_WIDTH, WebCam.MAX_HEIGHT, false, backgroundColor);
 			
-			// FIXME use timer or camera event here?
 			timer = new Timer(int(1000 / fps));
 			timer.addEventListener(TimerEvent.TIMER, render);
 		}
+		
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
 			metaBmpData.fillRect(metaBmpData.rect, backgroundColor);
-			metaBmpData.processingScale = scale;
 			
 			metaBmpData.draw(cameraBmpData, matrix, null, null, null, true);
 			metaBmpData.fullSizeBmpData = cameraBmpData;
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
+			
+			currentFPS = camera.currentFPS;
+			
+			if (capFPS && currentFPS < fps)
+			{
+				fps = currentFPS;
+				updateUI("fps", fps);
+			}
 		}
 		
-		public function refreshCamera():void
+		
+		public function restartCamera(event:Event = null):void
 		{
+			detachCamera();
+			attachCamera();
+			
 			if (camera)
 			{
-				camera.setMode(cameraWidth, cameraHeight, fps, cameraFavourArea);
 				camera.setMotionLevel(motionLevel, motionTimeout);
 				camera.setQuality(bandwidth, quality); 
 				camera.setLoopback(compressFrames);
@@ -214,42 +268,34 @@ package hislope.filters.inputs
 			}
 		}
 		
-		public function showSettings():void
-		{
-			Security.showSettings(SecurityPanel.CAMERA);
-		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 
 		private function attachCamera():void
 		{
-			var index:int = 0;
-
-			for (var i:int = 0; i < Camera.names.length; i++)
-			{
-				/* Finds default iSight webcam on a Mac */
-				if (Camera.names[i] == "USB Video Class Video")
-				{
-					index = i;
-					break;
-				}
-			}
+			cameraName = Camera.names[cameraIndex];
+			camera = getCamera(cameraIndex);
 			
-			trace("GET CAMERA", Camera.names[index]);
-			camera = getCamera(index);
-			trace("CAMERA:", camera);
-			
-			camera.setMode(cameraWidth, cameraHeight, fps, cameraFavourArea);
+			camera.setMode(cameraWidth, cameraHeight, cameraFPS, cameraFavourArea);
 			camera.addEventListener(ActivityEvent.ACTIVITY, activityHandler);
 			
 			video.attachCamera(camera);
 		}
 		
+		
+		private function detachCamera():void
+		{
+			if (camera)	camera.removeEventListener(ActivityEvent.ACTIVITY, activityHandler);
+			camera = null;
+			video.attachCamera(camera);
+		}
+		
+		
 		private function getCamera(cameraIndex:int = -1):Camera
 		{
 			if (camera != null)
 			{
-				if (muted) Security.showSettings(SecurityPanel.PRIVACY);
+				if (muted) showCameraSettings(null, SecurityPanel.PRIVACY);
 				return camera;
 			}
 			
@@ -258,16 +304,17 @@ package hislope.filters.inputs
 			if (camera != null)
 			{
 				// Init camera
-				camera.setMode(cameraWidth, cameraHeight, fps, cameraFavourArea);
+				camera.setMode(cameraWidth, cameraHeight, cameraFPS, cameraFavourArea);
 				camera.addEventListener(StatusEvent.STATUS, onStatusChange);
 				return camera;
 				
 			} else {
 				// No camera found
-				Security.showSettings(SecurityPanel.CAMERA);
+				showCameraSettings();
 				return new Camera();
 			}
 		}
+		
 		
 		override public function start():void
 		{
@@ -276,9 +323,11 @@ package hislope.filters.inputs
 			timer.start();
 		}
 		
+		
 		override public function stop():void
 		{
 			trace("webcam stop");
+			detachCamera();
 			timer.stop();
 		}
 			
@@ -287,25 +336,58 @@ package hislope.filters.inputs
 		private function render(event:TimerEvent):void
 		{
 			cameraBmpData.draw(video);
+			
+			/*// check whether frames are the same
+			videoCompareData.draw(videoHolder, compareMatrix);
+			videoCompareData.draw(videoData, compareMatrix, null, BlendMode.DIFFERENCE);
+
+			var numChangedPixel : uint = videoCompareData.threshold(videoCompareData, 
+					COMPARE_DIMENSION, ZERO_POINT, ">=", 
+					0x00380000, 0x20FF0000, 0x00FF0000);
+			
+			if (numChangedPixel > _pixelThreshold)
+			{
+				_lastVideoUpdate = now;
+				videoData.draw(videoHolder);
+			}*/
+			
 			dispatchEvent(new Event(HiSlopeEvent.INPUT_RENDERED));
 		}
 		
+		
 		override public function updateParams():void
-		{		
+		{
 			matrix.identity();
 			
-			if (mirrorMode)
+			if (autoFit)
 			{
-				matrix.scale(-scale, scale);
-				matrix.translate(width, 0);
+				scale = fullScale;
+				updateUI("scale", scale);
+			}
+
+			if (flipX || flipY)
+			{
+				var mirrorX:Number = flipX ? -1 : 1;
+				var mirrorY:Number = flipY ? -1 : 1;
+				
+				var moveX:Number = flipX ? width : 0;
+				var moveY:Number = flipY ? height : 0;
+				
+				matrix.scale(mirrorX * scale, mirrorY * scale);
+				matrix.translate(moveX, moveY);
 			} else {
 				matrix.scale(scale, scale);
 			}
 			
+			// TODO check if last value of cameraIndex is the same, if not call restartCamera 
+			
 			/*fitPreviewScale(scale);*/
 			
 			if (timer) timer.delay = int(1000 / fps);
+			
+			super.updateParams();
 		}
+		
 		
 		private function activityHandler(event:ActivityEvent):void
 		{
@@ -313,24 +395,42 @@ package hislope.filters.inputs
 			cameraActivity = camera.activityLevel;
 		}
 		
+		
 		private function onStatusChange(event:StatusEvent):void
 		{
-			trace(event.code);
-			
 			if (event.code == "Camera.Unmuted")
 			{
-				// Shows all available cameras
-				showSettings();
+				showCameraSettings();
 			}
 		}
 		
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
-						
+		
 		public function get muted():Boolean
 		{
 			return camera == null || camera.muted || camera.name == null || camera.width == 0;
 		}
 		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
+		
+		private function setDefaultMacCam():void
+		{
+			for (var i:int = 0; i < Camera.names.length; i++)
+			{
+				/* Finds default iSight webcam on a Mac */
+				if (Camera.names[i] == "USB Video Class Video" || Camera.names[i] == "Built-in iSight")
+				{
+					cameraIndex = i;
+					break;
+				}
+			}
+		}
+		
+		
+		public function showCameraSettings(event:Event = null, panel:String = SecurityPanel.CAMERA):void
+		{
+			Security.showSettings(panel);
+		}
+		
 	}
 }

@@ -33,7 +33,7 @@ package hislope.filters.basic
 
 	import flash.display.BitmapData;
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import net.blog2t.util.BitmapUtils;
 	import hislope.display.MetaBitmapData;
 
@@ -84,14 +84,16 @@ package hislope.filters.basic
 		
 			metaBmpData.paletteMap(metaBmpData, rect, point, paletteMap.reds, paletteMap.greens, paletteMap.blues, paletteMap.alphas);
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 
 		override public function updateParams():void
-		{			
+		{
 			paletteMap.posterize(_levels);
+			
+			super.updateParams();
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

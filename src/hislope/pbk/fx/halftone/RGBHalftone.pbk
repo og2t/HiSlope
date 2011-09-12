@@ -1,0 +1,96 @@
+<languageVersion:1.0;>
+
+kernel RGBHalftone
+<   
+	namespace : "net.blog2t.filters";
+    vendor : "Tomek Augustyn / Og2t";
+    version : 1;
+    description : "True RGB Halftone";
+>
+{
+
+parameter float dotSize 
+< 
+     defaultValue: float(3.0); 
+     minValue: float(0.0); 
+     maxValue: float(50.0);
+     description: "Size of the dot";
+>;
+
+parameter float angleDiff 
+< 
+     defaultValue: float(60.0); 
+     minValue: float(0.0); 
+     maxValue: float(60.0); 
+     description: "Angle difference between channels";
+>; 
+
+parameter float threshold
+< 
+     defaultValue: float(0.9); 
+     minValue: float(0.0);
+     maxValue: float(1.0);
+     description: "Threshold Strength";
+>;
+
+parameter float angle 
+< 
+     defaultValue: float(45.0); 
+     minValue: float(0.0); 
+     maxValue: float(90.0);
+     description: "Start Angle";
+>;
+
+parameter float2 rotationCenter
+<
+     minValue: float2(0.0,0.0);
+     maxValue: float2(2048.0, 2048.0);
+     defaultValue: float2(150.0, 150.0);
+     description: "Raster pattern rotation center";
+>;
+
+input image4 srcPixel;
+output pixel4 dstPixel;
+
+#define PI 3.1415926535897932384626433832795
+#define PI180 0.0174532925199
+
+#define sind(a) sin(float(a) * PI180)
+#define cosd(a) cos(float(a) * PI180)
+
+#define added(sh,sa,ca,c,d) 0.5 + 0.25 * cos((sh.x * sa + sh.y * ca + c.x) * d) + 0.25 * cos((sh.x * ca - sh.y * sa + c.y) * d);
+
+    void evaluatePixel()
+    {        
+        float2 srcCoord = outCoord();
+        float2 shift = srcCoord - rotationCenter;
+  
+        float piDot = PI / dotSize;
+        float angleShift = -angle;
+
+        pixel4 raster;
+        pixel4 rasterPattern;
+ 
+        rasterPattern.r = added(shift, sind(angleShift), cosd(angleShift), rotationCenter, piDot);
+        
+        angleShift += angleDiff;
+        rasterPattern.g = added(shift, sind(angleShift), cosd(angleShift), rotationCenter, piDot);
+        
+        angleShift += angleDiff;
+        rasterPattern.b = added(shift, sind(angleShift), cosd(angleShift), rotationCenter, piDot);
+ 
+        pixel4 srcPixel = sampleNearest(srcPixel, srcCoord);
+        float invThreshold = 1.0 - threshold;
+            
+        raster.r = (rasterPattern.r * threshold + srcPixel.r - threshold) / invThreshold;
+        raster.g = (rasterPattern.g * threshold + srcPixel.g - threshold) / invThreshold;
+        raster.b = (rasterPattern.b * threshold + srcPixel.b - threshold) / invThreshold;
+        raster.a = 1.0;
+ 
+        dstPixel = raster;
+        
+        // uncomment to see how the raster pattern looks 
+        //rasterPattern.a = 1.0; dstPixel = rasterPattern;
+    }
+}
+    

@@ -39,7 +39,7 @@ package hislope.filters.visuals
 
 	import hislope.display.MetaBitmapData;
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import net.blog2t.util.BitmapUtils;
 	import net.blog2t.util.BlobDetection;
 	import net.blog2t.util.Spotlight;
@@ -71,12 +71,19 @@ package hislope.filters.visuals
 				max: 1.5,
 				type: "number"
 			}, {
+				name: "blur",
+				label: "Blur",
+				current: 1,
+				min: 1,
+				max: 50,
+				type: "number"
+			}, {
 				name: "overlayOpacity",
 				label: "Overlay Opacity",
 				current: 0.5,
 				min: 0.1,
 				max: 1,
-				type: "number"
+				type: "knob"
 			}, {
 				name: "points",
 				label: "Show points",
@@ -93,12 +100,15 @@ package hislope.filters.visuals
 				current: false,
 				type: "boolean"
 			}, {
-				name: "blur",
-				label: "Blur",
-				current: 1,
-				min: 1,
-				max: 50,
-				type: "number"
+				name: "circles",
+				label: "Show circles",
+				current: true,
+				type: "boolean"
+			}, {
+				name: "triangulationPoints",
+				label: "Show Triangulation Points",
+				current: false,
+				type: "boolean"
 			}, {
 				name: "linesColor",
 				label: "lines color",
@@ -130,6 +140,8 @@ package hislope.filters.visuals
 		public var points:Boolean;
 		public var lines:Boolean;
 		public var fills:Boolean;
+		public var circles:Boolean;
+		public var triangulationPoints:Boolean;
 		public var blur:Number;
 		public var linesColor:uint;
 		public var pointsColor:uint
@@ -160,8 +172,12 @@ package hislope.filters.visuals
 			spotlight.radius += (metaBmpData.spot.radius * radiusDeflation - spotlight.radius) * 0.7;
 			
 			outline.graphics.lineStyle(1.5, circleColor, 0.5);
-			drawArc(outline.graphics, spotlight.centerX, spotlight.centerY, spotlight.radius, -60, 60);
-			drawArc(outline.graphics, spotlight.centerX, spotlight.centerY, spotlight.radius, 120, 240);
+			
+			if (circles)
+			{
+				drawArc(outline.graphics, spotlight.centerX, spotlight.centerY, spotlight.radius, -60, 60);
+				drawArc(outline.graphics, spotlight.centerX, spotlight.centerY, spotlight.radius, 120, 240);
+			}
 			
 			pts = [];
 
@@ -192,7 +208,7 @@ package hislope.filters.visuals
 					outline.graphics.lineTo(t.p1.X, t.p1.Y);
 				}
 				
-				if (points)
+				if (points && triangulationPoints)
 				{
 					outline.graphics.lineStyle(0, centersColor, 0.75);
 					Voronoi.draw(delaunay, outline, points);
@@ -211,7 +227,8 @@ package hislope.filters.visuals
 				/*infoArea.text = pts.length + " PTS\n" + delaunay.length + " TRGS";*/
 			}
 			
-			if (metaBmpData.eyes)
+			// draw eye circles
+			if (metaBmpData.eyes && circles)
 			{
 				for each (var eyeRect:Rectangle in metaBmpData.eyes)
 				{
@@ -230,7 +247,7 @@ package hislope.filters.visuals
 			
 			/*metaBmpData.draw(infoArea, matrix);*/
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -239,6 +256,8 @@ package hislope.filters.visuals
 		{
 			spotlight.blur = blur;
 			spotlight.opacity = overlayOpacity;
+			
+			super.updateParams();
 		}
 		
 		/**

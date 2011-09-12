@@ -99,7 +99,7 @@ package hislope.filters.color
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
 			metaBmpData.applyFilter(metaBmpData, rect, point, colorMatrixFilter);
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -109,6 +109,8 @@ package hislope.filters.color
 			colorMatrix.reset();
 			colorMatrix.adjustColor(brightness, contrast, saturation, hue);
 			colorMatrixFilter = new ColorMatrixFilter(colorMatrix);
+			
+			super.updateParams();
 		}
 		
 		/*var a: int = img.getAvgValue();

@@ -104,7 +104,7 @@ package hislope.filters.pixelbender.fx
 		{
 			metaBmpData.applyFilter(metaBmpData, rect, point, shaderFilter);
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -115,6 +115,8 @@ package hislope.filters.pixelbender.fx
 			shader.data.n1.value = [n1];
 			shader.data.n2.value = [n2];
 			shader.data.n3.value = [n3];
+			
+			super.updateParams();
 		}
 		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

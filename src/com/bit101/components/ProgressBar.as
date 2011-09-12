@@ -38,6 +38,9 @@ package com.bit101.components
 	   	protected var _value:Number = 0;
 	   	protected var _max:Number = 1;
 
+		protected var _min:Number = 0;
+		protected var _tick:Number = 1;
+
 		/**
 		 * Constructor
 		 * @param parent The parent DisplayObjectContainer on which to add this ProgressBar.
@@ -82,8 +85,6 @@ package com.bit101.components
 		{
 			_bar.scaleX = _value / _max;
 		}
-
-		
 		
 		
 		///////////////////////////////////
@@ -96,6 +97,7 @@ package com.bit101.components
 		override public function draw():void
 		{
 			super.draw();
+			
 			_back.graphics.clear();
 			_back.graphics.beginFill(Style.BACKGROUND);
 			_back.graphics.drawRect(0, 0, _width, _height);
@@ -106,6 +108,8 @@ package com.bit101.components
 			_bar.graphics.drawRect(0, 0, _width - 2, _height - 2);
 			_bar.scaleX = 0;
 			_bar.graphics.endFill();
+			
+			update();
 		}
 		
 		
@@ -143,7 +147,21 @@ package com.bit101.components
 		}
 		public function get value():Number
 		{
-			return _value;
+			return Math.round(_value / _tick) * _tick;
+			/*return _value;*/
+		}
+		
+		
+		/**
+		 * Gets / sets the minimum value of this slider.
+		 */
+		public function set minimum(m:Number):void
+		{
+			_min = m;
+		}
+		public function get minimum():Number
+		{
+			return _min;
 		}
 		
 	}

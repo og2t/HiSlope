@@ -36,10 +36,12 @@ package hislope.filters.detectors
 	import flash.display.Sprite;
 	import flash.display.Graphics;
 	import flash.utils.setTimeout;
+	import flash.utils.clearTimeout;
 	import hislope.filters.FilterBase;
 	import net.blog2t.util.BitmapUtils;
 	import flash.geom.Rectangle;
 	import flash.geom.Matrix;
+	import net.blog2t.util.RectUtils;
 	
 	import jp.maaash.ObjectDetection.ObjectDetector;
 	import jp.maaash.ObjectDetection.ObjectDetectorEvent;
@@ -55,19 +57,16 @@ package hislope.filters.detectors
 		private static const PARAMETERS:Array = [
 			{
 				name: "interval",
-				label: "time interval",
-				current: 1.0,
-				min: 0.1,
+				label: "detect interval",
+				current: 0.2,
+				min: 0.05,
 				max: 10,
-				type: "number",
-				step: 0.25
+				step: 0.05
 			}, {
 				name: "scaleFactor",
 				label: "scale Factor",
-				current: 3.0,
-				min: 1,
-				max: 10,
-				type: "number",
+				current: 0.3,
+				min: 0.1,
 				step: 0.1
 			}
 		];
@@ -86,24 +85,34 @@ package hislope.filters.detectors
 		private var detectionEnabled:Boolean = true;
 		private var drawMatrixInv:Matrix;
 		private var drawMatrixUp:Matrix;
-		private var motionRect:Rectangle;
+		private var faceRect:Rectangle;
 		private var scaledBmpData:MetaBitmapData;
+		private var detectedFaceRects:Vector.<Rectangle>;
+		private var timeoutId:int;
 		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
 		public function QuickFaceDetector(OVERRIDE:Object = null) 
 		{
-			scaledBmpData = resultMetaBmpData.getClone();
+			scaledBmpData = resultMetaBmpData.cloneAsMeta();
 			detector = new ObjectDetector();
+			
 			var options:ObjectDetectorOptions = new ObjectDetectorOptions();
 			options.min_size = 30;
 			detector.options = options;
 			detector.addEventListener(ObjectDetectorEvent.DETECTION_COMPLETE, detectionHandler);
+			detectedFaceRects = new Vector.<Rectangle>();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
 		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
+
+		override public function dispose():void
+		{
+			super.dispose();
+			clearTimeout(timeoutId);
+		}
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
@@ -115,14 +124,37 @@ package hislope.filters.detectors
 				scaledBmpData.draw(detectionBmpData);
 				scaledBmpData.draw(faceRectContainer);
 				metaBmpData.faceDetected = true;
-				//motionRect.height -= 30;
-				metaBmpData.activeRect = motionRect;
+				
+				if (faceRect)
+				{
+					metaBmpData.faceRect = faceRect;
+					metaBmpData.faceRectNorm = RectUtils.normalize(faceRect, metaBmpData);
+				}
+				
+				metaBmpData.faceRects = detectedFaceRects;
 			}
 
-			getPreviewFor(scaledBmpData);
+			postPreview(scaledBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
+
+		private function enableDetection():void
+		{
+			detectionEnabled = true;
+		}
+
+		override public function updateParams():void
+		{
+			detectionBmpData = new BitmapData(width * scaleFactor, height * scaleFactor, false, 0);
+			drawMatrixInv = new Matrix(scaleFactor, 0, 0, scaleFactor);
+			drawMatrixUp = new Matrix(1 / scaleFactor, 0, 0, 1 / scaleFactor);
+			scaledBmpData.fillRect(scaledBmpData.rect, 0x000000);
+			
+			super.updateParams();
+		}
+
+		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 
 		private function detectionHandler(event:ObjectDetectorEvent):void
 		{
@@ -132,34 +164,29 @@ package hislope.filters.detectors
 			
 			if (event.rects)
 			{
-				g.lineStyle(1, 0x00ff00, 0.5);
+				detectedFaceRects.length = 0;
+				
+				g.lineStyle(1, 0x00FF00, 0.5);
 				event.rects.forEach(
 					function (r:Rectangle, idx:int, arr:Array):void
 					{
 						g.drawRect(r.x, r.y, r.width, r.height);
-						motionRect = new Rectangle(r.x * scaleFactor, r.y * scaleFactor, r.width * scaleFactor, r.height * scaleFactor);
+						faceRect = new Rectangle(r.x / scaleFactor, r.y / scaleFactor, r.width / scaleFactor, r.height / scaleFactor);
+						detectedFaceRects.push(faceRect);
 					}
 				);
 			}
 			
-			setTimeout(enableDetection, interval * 1000);
+			timeoutId = setTimeout(enableDetection, interval * 1000);
 		}
 
-		private function enableDetection():void
-		{
-			detectionEnabled = true;
-		}
-
-		override public function updateParams():void
-		{
-			detectionBmpData = new BitmapData(width / scaleFactor, height / scaleFactor, false, 0);
-			drawMatrixInv = new Matrix(1 / scaleFactor, 0, 0, 1 / scaleFactor);
-			drawMatrixUp = new Matrix(scaleFactor, 0, 0, scaleFactor);
-			scaledBmpData.fillRect(scaledBmpData.rect, 0x000000);
-		}
-
-		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
+		
+		public function get faceRects():Vector.<Rectangle>
+		{
+			return detectedFaceRects;
+		}
+		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
 	}
 }

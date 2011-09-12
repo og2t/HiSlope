@@ -117,7 +117,7 @@ package hislope.filters.motion
 			spotlight.height = height;
 			spotlight.on();
 			
-			sourceBmpData = resultMetaBmpData.clone();
+			sourceBmpData = resultMetaBmpData.cloneAsMeta();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -139,13 +139,13 @@ package hislope.filters.motion
 				spotlight.radius = metaBmpData.spot.radius;
 			}
 			
-			else if (metaBmpData.activeRect)
+			else if (metaBmpData.faceRect)
 			{
-				if (!metaBmpData.activeRect.isEmpty())
+				if (!metaBmpData.faceRect.isEmpty())
 				{
-					centerDestX = metaBmpData.activeRect.x + metaBmpData.activeRect.width / 2;
-					centerDestY = metaBmpData.activeRect.y + metaBmpData.activeRect.height / 2;
-					radiusDest = Math.max(metaBmpData.activeRect.width, metaBmpData.activeRect.height) / 2;
+					centerDestX = metaBmpData.faceRect.x + metaBmpData.faceRect.width / 2;
+					centerDestY = metaBmpData.faceRect.y + metaBmpData.faceRect.height / 2;
+					radiusDest = Math.max(metaBmpData.faceRect.width, metaBmpData.faceRect.height) / 2;
 				} else {
 					radiusDest = 0;
 				}
@@ -155,8 +155,8 @@ package hislope.filters.motion
 			
 			metaBmpData.draw(spotlight, null, null, blendModes[int(blendMode)]);
 			
-			getPreviewFor(metaBmpData);
-			/*getPreviewFor(sourceBmpData);*/
+			postPreview(metaBmpData);
+			/*postPreview(sourceBmpData);*/
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
@@ -166,6 +166,8 @@ package hislope.filters.motion
 			spotlight.blur = blur;
 			spotlight.opacity = opacity;
 			spotlight.color = color;
+			
+			super.updateParams();
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

@@ -88,7 +88,9 @@ package hislope.filters.generators
 		
 		public function Pins(OVERRIDE:Object = null)
 		{
-			super(pbjFile, PARAMETERS);
+			super(pbjFile);
+
+			fullShaderPrecision();
 
 			timer = new Timer(int(1000 / fps));
 			timer.addEventListener(TimerEvent.TIMER, render);
@@ -137,12 +139,12 @@ package hislope.filters.generators
 			
 			i++;
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void
 		{		
-			/*if (timer) timer.delay = int(1000 / fps);*/
+			if (timer) timer.delay = int(1000 / fps);
 			
 			shader.data.cutOff.value = [cutOffMin, cutOffMax];
 			

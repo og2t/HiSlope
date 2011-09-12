@@ -37,7 +37,7 @@ package hislope.filters.motion
 	import flash.display.Shape;
 	import flash.filters.ColorMatrixFilter;
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import hislope.filters.basic.Posterize;
 	import net.blog2t.util.BitmapUtils;
 	import flash.geom.Rectangle;
@@ -60,10 +60,13 @@ package hislope.filters.motion
 			}, {
 				name: "quality",
 				label: "Blur quality",
-				current: 3,
+				current: 1,
 				min: 1,
 				max: 3,
-				type: "int"
+				type: "stepper"
+			}, {
+				name: "enablePosterize",
+				current: false
 			}
 		];
 
@@ -71,10 +74,11 @@ package hislope.filters.motion
 		
 		public var amount:Number;
 		public var quality:int;
+		public var enablePosterize:Boolean;
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		private var beforeBmpData:BitmapData;
+		private var previousBmpData:BitmapData;
 		private var posterize:Posterize;
 		private var outline:Shape = new Shape();
 		
@@ -85,7 +89,7 @@ package hislope.filters.motion
 			posterize = new Posterize();
 			posterize.levels = 2;
 			
-			beforeBmpData = resultMetaBmpData.clone();
+			previousBmpData = resultMetaBmpData.clone();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 		}
@@ -94,21 +98,29 @@ package hislope.filters.motion
 
 		override public function process(metaBmpData:MetaBitmapData):void
 		{
-			/*var comparsion:Object = beforeBmpData.compare(metaBmpData) as BitmapData;*/
-			var comparsion:Object = metaBmpData.compare(beforeBmpData) as BitmapData;
+			/*var comparsion:Object = previousBmpData.compare(metaBmpData) as BitmapData;*/
+			var comparsion:Object = metaBmpData.compare(previousBmpData) as BitmapData;
 			if (comparsion == null) return;
 
-			metaBmpData.copyTo(beforeBmpData);
+			metaBmpData.copyTo(previousBmpData);
 			if (comparsion != 0) metaBmpData.copyPixels(comparsion as BitmapData, rect, point);
 
 			BitmapUtils.desaturate(metaBmpData);
-			BitmapUtils.blur(metaBmpData, amount, quality);
-			posterize.process(metaBmpData);
 			
-			var recta:Rectangle = metaBmpData.getColorBoundsRect(0xFFFFFFFF, 0xffffffff, true);
-			var rectb:Rectangle = metaBmpData.getColorBoundsRect(0xFFFFFFFF, 0xff000000, true);
+			if (amount > 1)
+			{
+				BitmapUtils.blur(metaBmpData, amount, quality);
+				
+				if (enablePosterize)
+				{
+					posterize.process(metaBmpData);
+				}
+			}
 
-			/*outline.graphics.clear();
+			// experimental
+			/*var recta:Rectangle = metaBmpData.getColorBoundsRect(0xFFFFFFFF, 0xffffffff, true);
+			var rectb:Rectangle = metaBmpData.getColorBoundsRect(0xFFFFFFFF, 0xff000000, true);
+			outline.graphics.clear();
 			outline.graphics.lineStyle(1, 0xff0000, 1);
 			outline.graphics.drawRect(recta.x, recta.y, recta.width, recta.height);
 			outline.graphics.lineStyle(1, 0x00ff00, 1);
@@ -117,15 +129,10 @@ package hislope.filters.motion
 			
 			//metaBmpData.threshold(metaBmpData, rect, point, ">", 0x0001000, 0xffffffff, 0x0000ff00, false);
 
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
-
-		override public function updateParams():void
-		{
-		}
-
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
 		// HELPERS ////////////////////////////////////////////////////////////////////////////

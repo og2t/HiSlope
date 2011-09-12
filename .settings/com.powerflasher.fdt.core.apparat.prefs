@@ -1,0 +1,5 @@
+#Fri Sep 09 17:34:38 BST 2011
+com.powerflasher.fdt.core.apparat.disabled.launchers=Face Squash,Static Mirror Demo,Point Tracker Demo,BRFFaceEstimationDemo
+com.powerflasher.fdt.core.apparat.features=TDSI |Reducer |Stripper |Dump |
+eclipse.preferences.version=1
+useProjectSettings=true

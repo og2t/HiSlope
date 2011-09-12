@@ -1,0 +1,113 @@
+<languageVersion : 1.0;>
+ 
+kernel Crossfade
+<   namespace : "SpinningRT";
+    vendor : "Spinning Owl";
+    version : 1;
+    description : "Raytracing for Flash Player 10+. Optimized with faked distance calcs"; >
+{   
+    parameter float3 sphere1    // (x,y,z) .. radius always = 1
+    <
+        defaultValue : float3(-.5, 0., 5.);
+        minValue : float3(-10., -10., -10.);
+        maxValue : float3(10., 10., 10.);
+    >;
+ 
+    parameter float3 sphere2    // (x,y,z) .. radius always = 1
+    <
+        defaultValue : float3(.5, 0., 5.);
+        minValue : float3(-10., -10., -10.);
+        maxValue : float3(10., 10., 10.);
+    >;
+ 
+ 
+    parameter float2 screensize    // (x,y)
+    <
+        defaultValue : float2(512., 512.);
+        minValue : float2(0., 0.);
+        maxValue : float2(2048., 2048.);
+    >;
+ 
+    parameter float tweak
+    <
+        defaultValue : float(1.);
+        minValue : float(.2);
+        maxValue : float(2.);
+    >;
+    
+    #if !AIF_FLASH_TARGET
+    
+    parameter float2 size
+    <
+        minValue: float2(0, 0);
+        maxValue: float2(1024, 1024);
+        defaultValue: float2(640.0, 480.0);
+    >;
+    
+    #endif
+ 
+    output pixel4 dst;
+ 
+    #if !AIF_FLASH_TARGET
+
+    region generated()
+    {
+        return region(float4(0, 0, size.x, size.y));
+    }
+    
+    #endif
+ 
+    void evaluatePixel()
+    {
+        // ray of current pixel
+        float3 ray_dir = -.5 + float3(outCoord().x / screensize.y, outCoord().y / screensize.y, 2.5);
+ 
+        // Code independent of render path
+        float2 aa;
+        aa.x = aa.y = dot(ray_dir, ray_dir);
+        float2 bb = -2. * float2(dot(ray_dir, sphere1), dot(ray_dir, sphere2));
+        float2 root = bb * bb - 4. * aa * (float2(dot(sphere1, sphere1), dot(sphere2, sphere2)) - 1.);
+ 
+ 
+        // Render paths:
+        if(root[0] < 0. && root[1] < 0.)
+ 
+            // No intersections
+            dst = pixel4(0., 0., 0., 1.);
+ 
+        else if(root[0] > 0. && root[1] < 0.) {
+ 
+            // Intersecting only 1st sphere
+            root[0] = sqrt(root[0]); 
+            aa[0] = -.5 / aa[0];
+            float2 t = float2((-bb[0] + root[0])*aa[0], (-bb[0] - root[0])*aa[0]);
+            dst = pixel4(0., 0., t[1]-t[0], 1.);           
+        }
+        else if(root[0] < 0. && root[1] > 0.) {
+ 
+            // Intersecting only 2nd sphere
+            root[1] = sqrt(root[1]); 
+            aa[1] = -.5 / aa[1];
+            float2 t = float2((-bb[1] + root[1])*aa[1], (-bb[1] - root[1])*aa[1]);
+            dst = pixel4(t[1]-t[0], 0., 0., 1.);
+        }           
+        else if(root[0] > 0. && root[1] > 0.) {
+ 
+            // Intersecting both spheres
+            float2 dist = float2(0., 0.);      // distance travelled inside spheres
+            root = sqrt(root);
+            aa = -.5 / aa;                 // coefs combined
+ 
+            float2 t1 = (-bb + root)*aa;    // coef of 1st root both spheres
+            float2 t2 = (-bb - root)*aa;    // coef of 2nd root both spheres
+ 
+            dist[0] = (t2[0] - t1[0]);      // dist[0] = distance(ray_dir * t1[0], ray_dir * t2[0]);
+            dist[1] = (t2[1] - t1[1]);      // dist[1] = distance(ray_dir * t1[1], ray_dir * t2[1]);
+ 
+            if(t2[1] > t2[0])       // apply material properties
+                dst = pixel4(dist[1], 0., dist[0]-dist[1]*tweak, 1.);
+            else
+                dst = pixel4(dist[1]-dist[0]*tweak, 0., dist[0], 1.);
+        }
+    }   
+}

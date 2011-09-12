@@ -1,0 +1,48 @@
+    <languageVersion : 1.0;>
+    kernel Circle
+    <  
+        namespace : "net.blog2t.filters";
+        vendor : "Tomek Augustyn";
+        version : 1;
+        description : "Circles";
+    >
+    {
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float2 center
+    <
+        minValue: float2( 0.0, 0.0 );
+        maxValue: float2( 400.0, 400.0 );
+        defaultValue: float2( 100.0, 100.0 );
+    >;
+    parameter float offset
+    <
+        minValue: 0.0;
+        maxValue: 1440.0;
+        defaultValue: 10.0;
+    >;
+    parameter float frequency
+    <
+        minValue: 0.01;
+        maxValue: 2.0;
+        defaultValue: 0.1;
+    >;
+    
+    #define PI 3.1415926535897932384626433832795
+    #define cosd(x) float(cos(x * PI / 180.0))
+    #define cosdn(x) float((1.0 + cos(x * PI / 180.0)) / 2.0)
+
+    void
+    evaluatePixel() 
+    {
+        float2 srcCoord = outCoord();
+        float d = distance(srcCoord, center);
+        float val = cosdn(d * frequency + offset);
+        dst = pixel4(val, val, val, 1);
+    }
+}
+
+
+
+

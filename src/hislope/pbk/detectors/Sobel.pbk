@@ -1,0 +1,65 @@
+< languageVersion: 1.0; >
+
+kernel EdgeDetection
+<
+    namespace: "";
+    vendor: "Shimada Kousho";
+    version: 1;
+    description: "detect edge";
+>
+{
+	// sourced from http://level0.kayac.com/2010/09/pixelbender_edgedetection_filter.php
+	
+	parameter float lowThreshold
+    <
+        defaultValue: float(0.0);
+        minValue: float(0.0);
+        maxValue: float(1.0);
+    >;
+    
+    parameter float highThreshold
+    <
+        defaultValue: float(1.0);
+        minValue: float(0.0);
+        maxValue: float(1.0);
+    >;
+    
+    parameter bool enableThreshold
+    <
+        defaultValue: bool(false);
+    >;
+
+    input image4 src;
+    output float4 dst;
+    
+    void evaluatePixel()
+    {
+        float4 col = float4(0.0, 0.0, 0.0, 0.0);
+        float4 col_hx = float4(0.0, 0.0, 0.0, 0.0);
+        float4 col_hy = float4(0.0, 0.0, 0.0, 0.0);
+        
+        col_hx -= sampleNearest(src, outCoord() + float2(-1.0, -1.0));
+        col_hx -= sampleNearest(src, outCoord() + float2(-1.0, 0.0)) * 2.0;
+        col_hx -= sampleNearest(src, outCoord() + float2(-1.0, 1.0));
+        col_hx += sampleNearest(src, outCoord() + float2(1.0, -1.0));
+        col_hx += sampleNearest(src, outCoord() + float2(1.0, 0.0)) * 2.0;
+        col_hx += sampleNearest(src, outCoord() + float2(1.0, 1.0));
+        
+        col_hy -= sampleNearest(src, outCoord() + float2(-1.0, -1.0));
+        col_hy -= sampleNearest(src, outCoord() + float2(0.0, -1.0)) * 2.0;
+        col_hy -= sampleNearest(src, outCoord() + float2(1.0, -1.0));
+        col_hy += sampleNearest(src, outCoord() + float2(-1.0, 1.0));
+        col_hy += sampleNearest(src, outCoord() + float2(0.0, 1.0)) * 2.0;
+        col_hy += sampleNearest(src, outCoord() + float2(1.0, 1.0));
+
+        col.r = sqrt(pow(col_hx.r, 2.0) + pow(col_hy.r, 2.0));
+        col.g = sqrt(pow(col_hx.g, 2.0) + pow(col_hy.g, 2.0));
+        col.b = sqrt(pow(col_hx.b, 2.0) + pow(col_hy.b, 2.0));
+        
+        float col_mono = 0.298912 * col.r + 0.586611 * col.g + 0.114478 * col.b;
+        
+        if (enableThreshold) if(col_mono > lowThreshold && col_mono < highThreshold) col_mono = 0.0; else col_mono = 1.0;
+        
+        dst = float4(col_mono, col_mono, col_mono, 1.0);
+    }
+}

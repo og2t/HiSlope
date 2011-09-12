@@ -15,7 +15,7 @@
 	You are encouraged to release any improvements back to the ActionScript community.
 
 	VERSION HISTORY:
-	v0.1	Born on 09/07/2009
+	v0.1	Born on 08/09/2011
 
 	USAGE:
 
@@ -81,7 +81,7 @@ package hislope.filters.pixelbender // filter path
 		
 		public function FilterName(OVERRIDE:Object = null)
 		{
-			super(pbjFile, PARAMETERS);
+			super(pbjFile);
 			// init your bitmaps, variables, etc. here
 			
 			time = 0;
@@ -101,7 +101,7 @@ package hislope.filters.pixelbender // filter path
 			
 			metaBmpData.applyShader(shaderFilter);
 			
-			getPreviewFor(metaBmpData);
+			postPreview(metaBmpData);
 		}
 		
 		override public function updateParams():void
@@ -110,6 +110,8 @@ package hislope.filters.pixelbender // filter path
 			
 			shader.data.time.value = [time];
 			shader.data.frames.value = [frames];
+			
+			super.updateParams();
 		}
 		
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////

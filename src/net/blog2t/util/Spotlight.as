@@ -47,8 +47,10 @@ package net.blog2t.util
 	import flash.events.KeyboardEvent;
 	import flash.filters.BlurFilter;
 	
-	import gs.TweenLite;
-	import gs.easing.Expo;
+	import com.greensock.TweenLite;
+	import com.greensock.plugins.AutoAlphaPlugin;
+	import com.greensock.plugins.TweenPlugin;
+	import com.greensock.easing.Expo;
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
@@ -83,6 +85,8 @@ package net.blog2t.util
 		
 		public function Spotlight(sizeX:Number = 100, sizeY:Number = 100, opacity:Number = 0.75) 
 		{
+			TweenPlugin.activate([AutoAlphaPlugin]);
+			
 			_sizeX = sizeX;
 			_sizeY = sizeY;
 			_overlayOpacity = opacity;

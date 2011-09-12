@@ -38,7 +38,7 @@ package hislope.filters.motion
 	import flash.filters.ColorMatrixFilter;
 	import hislope.filters.IFilter;
 	import hislope.filters.FilterBase;
-	import hislope.filters.PaletteMap;
+	import hislope.util.PaletteMap;
 	import net.blog2t.util.BitmapUtils;
 	import flash.geom.Rectangle;
 	import flash.utils.setTimeout;
@@ -50,38 +50,35 @@ package hislope.filters.motion
 		// CONSTANTS //////////////////////////////////////////////////////////////////////////
 
 		private static const NAME:String = "Motion Capture";
+		private static const INFO:String = "Tracks motion and adds motionRect and motionAreasBmpData to metaBmpData";
+		
 		private static const PARAMETERS:Array = [
 			{
 				name: "sensitivity",
-				label: "Sensitivity",
-				current: 80,
+				current: 122,
 				min: 0,
 				max: 128,
 				type: "int"	
 			}, {
 				name: "blurAmount",
-				label: "Blur strength",
 				current: 10,
 				min: 1,
 				max: 20,
 				type: "number"
 			}, {
 				name: "blurQuality",
-				label: "Blur quality",
 				current: 2,
 				min: 1,
 				max: 3,
-				type: "int"
+				type: "stepper"
 			}, {
 				name: "timeout",
-				label: "Timeout",
 				current: 0.25,
 				min: 0.25,
 				max: 10,
 				type: "number"
 			}, {
 				name: "lockPosition",
-				label: "Lock Position",
 				current: false,
 				type: "boolean"
 			}
@@ -97,9 +94,9 @@ package hislope.filters.motion
 
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
-		private var areasBmpData:MetaBitmapData;
-		private var sourceBmpData:MetaBitmapData;
-		private var beforeBmpData:MetaBitmapData;
+		private var areasBmpData:BitmapData;
+		private var motionBmpData:BitmapData;
+		private var previousBmpData:BitmapData;
 		private var outline:Shape = new Shape();
 		
 		private var motionRect:Rectangle = new Rectangle(100, 100, 100, 100);
@@ -108,9 +105,9 @@ package hislope.filters.motion
 		
 		public function MotionCapture(OVERRIDE:Object = null)
 		{
-			areasBmpData = resultMetaBmpData.getClone();
-			beforeBmpData = resultMetaBmpData.getClone();
-			sourceBmpData = resultMetaBmpData.getClone();
+			areasBmpData = resultMetaBmpData.clone();
+			previousBmpData = resultMetaBmpData.clone();
+			motionBmpData = resultMetaBmpData.clone();
 			
 			init(NAME, PARAMETERS, OVERRIDE);
 			
@@ -123,21 +120,25 @@ package hislope.filters.motion
 		{
 			metaBmpData.copyTo(areasBmpData);
 			
-			areasBmpData.draw(beforeBmpData, null, null, BlendMode.DIFFERENCE);
-			metaBmpData.copyTo(beforeBmpData);
+			// draw previousBmpData using difference
+			areasBmpData.draw(previousBmpData, null, null, BlendMode.DIFFERENCE);
+			
+			// store current metaBmpData as previousBmpData
+			metaBmpData.copyTo(previousBmpData);
 
 			// make all pixels greater than just over black (0xFF111111) green (0xFF00FF00)
 			areasBmpData.threshold(areasBmpData, rect, point, ">", 0xFF111111, 0xFF00FF00, 0x00FFFFFF, true);
 			
-			sourceBmpData.fillRect(rect, 0xFF000000);
+			// clear 
+			motionBmpData.fillRect(rect, 0xFF000000);
 			// cutoff all green == 7f
-			sourceBmpData.threshold(areasBmpData, rect, point, "==", 0xFF00FF00, 0xFF007F00, 0x00FFFFFF, false);
+			motionBmpData.threshold(areasBmpData, rect, point, "==", 0xFF00FF00, 0xFF007F00, 0x00FFFFFF, false);
 
-			// replace with blurthreshold filter
-			BitmapUtils.blur(sourceBmpData, blurAmount, blurQuality);
-			sourceBmpData.threshold(sourceBmpData, rect, point, ">", 128 - sensitivity << 8, 0xffffffff, 0x0000ff00, false);
+			// TODO replace with blurthreshold filter
+			BitmapUtils.blur(motionBmpData, blurAmount, blurQuality);
+			motionBmpData.threshold(motionBmpData, rect, point, ">", 128 - sensitivity << 8, 0xffffffff, 0x0000ff00, false);
 
-			var recta:Rectangle = sourceBmpData.getColorBoundsRect(0xFFFFFFFF, 0xffffffff, true);
+			var recta:Rectangle = motionBmpData.getColorBoundsRect(0xFFFFFFFF, 0xffffffff, true);
 			
 			outline.graphics.clear();
 			outline.graphics.lineStyle(1, 0xff0000, 1);
@@ -148,21 +149,23 @@ package hislope.filters.motion
 			outline.graphics.lineStyle(1, 0x00ff00, 1);
 			outline.graphics.drawRect(motionRect.x, motionRect.y, motionRect.width, motionRect.height);
 
+			// FIXME use VOs
 			metaBmpData.motionRect = motionRect;
+			metaBmpData.motionAreasBmpData = motionBmpData;
 			
-			BitmapUtils.copy(sourceBmpData, metaBmpData);
-			sourceBmpData.draw(outline);
+			motionBmpData.draw(outline);
+			motionBmpData.draw(metaBmpData, null, null, BlendMode.SCREEN);
 
-			getPreviewFor(sourceBmpData as MetaBitmapData);
-			/*getPreviewFor(areasBmpData);*/
+			postPreview(motionBmpData);
 		}
+		
 		
 		override public function dispose():void
 		{
 			areasBmpData.dispose();
 			areasBmpData = null;
-			beforeBmpData.dispose();
-			beforeBmpData = null;
+			previousBmpData.dispose();
+			previousBmpData = null;
 			
 			super.dispose();
 		}
@@ -174,12 +177,9 @@ package hislope.filters.motion
 			if (lockPosition) return;
 			
 			if (customTimeout > 0) setTimeout(expire, customTimeout);
-				else setTimeout(expire, timeout * 1000);
+			else setTimeout(expire, timeout * 1000);
+			
 			motionRect.setEmpty();
-		}
-
-		override public function updateParams():void
-		{
 		}
 
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////

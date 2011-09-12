@@ -1,0 +1,84 @@
+<languageVersion : 1.0;>
+
+/**
+ * 
+ * Released under MIT license:
+ * http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+
+kernel AngledHalftoneDotScreen
+<   namespace : "net.guscampbell";
+    vendor : "Gus Campbell";
+    version : 1;
+    description : "Angled halftone screen with anti-aliased black dots and transparent background.";
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float angle
+    <
+        minValue: 0.0;
+        maxValue: 90.0;
+        defaultValue:0.0;
+        description: "grid angle in degrees";
+    >;
+
+    parameter int pitch
+    <
+        minValue: 3;
+        maxValue: 150;
+        defaultValue: 8;
+        description: "grid size in pixels";
+    >;
+    
+    // Approximate value for better performance.
+    const float root2 = 1.414214;
+    
+    void evaluatePixel()
+    {
+        // Approach: For each grid square, draw quater circles radiating from each corner.
+        // This allows circles to be bigger than the grid itself and so overlap each other.
+        
+        float angleRadians = radians(angle);
+        float cosine = cos(angleRadians);
+        float sine = sin(angleRadians);
+        
+        float pitchFloat = float(pitch);
+        float dotRadiusMax = (pitchFloat / 2.0 + 0.5) * root2; // Half the diaganol of the grid
+        
+        float rCosTheta = pitchFloat * cosine;
+        float rSinTheta = pitchFloat * sine;
+        
+        float2 antiRotatedOutCoord = float2(outCoord().x * cosine - outCoord().y * -sine, outCoord().x * -sine + outCoord().y * cosine);
+        float2 antiRotatedTopLeft = pitchFloat * floor(antiRotatedOutCoord / pitchFloat);
+        float2 topLeftCoord = float2(antiRotatedTopLeft.x * cosine - antiRotatedTopLeft.y * sine, antiRotatedTopLeft.x * sine + antiRotatedTopLeft.y * cosine);
+        
+        float2 bottomLeftCoord = topLeftCoord + float2(-rSinTheta, rCosTheta);
+        float2 bottomRightCoord = bottomLeftCoord + float2(rCosTheta, rSinTheta);
+        float2 topRightCoord = topLeftCoord + float2(rCosTheta, rSinTheta);
+        
+        pixel4 topLeftPixel = sampleNearest(src, topLeftCoord);
+        float topLeftRadius =  dotRadiusMax * topLeftPixel.a * (1.0 -  (topLeftPixel.r + topLeftPixel.g + topLeftPixel.b) / 3.0) - 1.0;
+        float invAlpha = smoothStep(0.0, 1.0, distance(outCoord(), topLeftCoord) - topLeftRadius);
+        
+        pixel4 topRightPixel = sampleNearest(src, topRightCoord);
+        float topRightRadius =  dotRadiusMax * topRightPixel.a * (1.0 -  (topRightPixel.r + topRightPixel.g + topRightPixel.b) / 3.0) - 1.0;
+        invAlpha *= smoothStep(0.0, 1.0, distance(outCoord(), topRightCoord) - topRightRadius);
+
+        pixel4 bottomRightPixel = sampleNearest(src, bottomRightCoord);
+        float bottomRightRadius =  dotRadiusMax * bottomRightPixel.a * (1.0 -  (bottomRightPixel.r + bottomRightPixel.g + bottomRightPixel.b) / 3.0) - 1.0;
+        invAlpha *= smoothStep(0.0, 1.0, distance(outCoord(), bottomRightCoord) - bottomRightRadius);
+
+        pixel4 bottomLeftPixel = sampleNearest(src, bottomLeftCoord);
+        float bottomLeftRadius =  dotRadiusMax * bottomLeftPixel.a * (1.0 - (bottomLeftPixel.r + bottomLeftPixel.g + bottomLeftPixel.b) / 3.0) - 1.0;
+        invAlpha *= smoothStep(0.0, 1.0, distance(outCoord(), bottomLeftCoord) - bottomLeftRadius);
+
+        dst.r = dst.g = dst.b = invAlpha;
+        dst.a = 1.0;
+
+		//dst.r = dst.g = dst.b = 1.0;
+        //dst.a = 1 - invAlpha;
+    }
+}

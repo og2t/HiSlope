@@ -3,8 +3,8 @@
 	[AS3] FilterBase
 	=======================================================================================
 
-	HiSlope toolkit copyright (c) 2010 Tomek 'Og2t' Augustyn
-	http://play.blog2t.net/hislope
+	HiSlope toolkit copyright (c) 2008-2011 Tomek 'Og2t' Augustyn
+	http://play.blog2t.net/HiSlope
 
 	You are free to use this source code in any non-commercial project. 
 	You are free to modify this source code in anyway you see fit.
@@ -34,17 +34,24 @@ package hislope.filters
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
 	import flash.geom.Matrix;
+	
 	import flash.display.BitmapData;
-	import hislope.filters.IFilter;
-	import hislope.core.FilterChain;
-	import hislope.events.HiSlopeEvent;
-	import hislope.display.MetaBitmapData;
-	/*import net.blog2t.util.print_r;*/
-	import __AS3__.vec.Vector;
-	import flash.events.EventDispatcher; 
-	import flash.events.Event; 
+	import flash.display.Stage;
+	import flash.display.StageQuality;
 	import flash.display.Shader;
 	import flash.display.ShaderParameter;
+	
+	import hislope.filters.IFilter;
+	
+	import hislope.core.FilterChain;
+	import hislope.core.FilterParser;
+	import hislope.gui.FilterPanel;
+	
+	import hislope.events.HiSlopeEvent;
+	import hislope.display.MetaBitmapData;
+
+	import flash.events.EventDispatcher; 
+	import flash.events.Event; 
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
@@ -55,14 +62,14 @@ package hislope.filters
 		public static var PREVIEW_WIDTH:int = 320;
 		public static var PREVIEW_HEIGHT:int = 240;
 		
-		public static var WIDTH:int = 320;
-		public static var HEIGHT:int = 240;
+		public static var WIDTH:int = 320 * 2;
+		public static var HEIGHT:int = 240 * 2;
 		
 		public static var PREVIEW_SMOOTHING:Boolean = true;
 
-		public static var PROCESSED:String = "processed";
-		
 		public static const PI180:Number = Math.PI / 180;
+		
+		public static var stage:Stage;
 		
 		// MEMBERS ////////////////////////////////////////////////////////////////////////////
 
@@ -70,39 +77,46 @@ package hislope.filters
 		protected var _defaultParams:Array;
 		protected var _presetParams:Object;
 		private var _debugVars:Array;
-		private var _previewScale:Number;
+		private var _previewScale:Number = 1.0;
 		private var previewScaleMatrix:Matrix = new Matrix();
 
 		protected var point:Point;
 		protected var rect:Rectangle;
 		
 		protected var _enabled:Boolean = true;
-		protected var _generatePreview:Boolean = false;
+		protected var _displayPreview:Boolean = false;
 		protected var _drawHistogram:Boolean = false;
+		protected var fitPreview:Boolean;
 		
 		protected var _resultBmpData:MetaBitmapData;
-		protected var _previousBmpData:BitmapData;
+		/*protected var _previousBmpData:BitmapData;*/
 
 		private var _previewBmpData:BitmapData;
+		private var _channelBmpData:BitmapData;
 
 		protected var histogramBmpData:BitmapData;
 		private var tempHistogramMap:BitmapData;
 		private var _histogramChannels:int;
 		public var _histogramData:Vector.<Vector.<Number>>;
 		
-		protected var _time:int;
+		private var _time:int;
+		private var _minTime:int;
+		private var _maxTime:int;
 		
-		private var filterPanel:Object;
+		private var _storeResult:Boolean = false;
+		
+		private var filterPanel:FilterPanel;
 		
 		// CONSTRUCTOR ////////////////////////////////////////////////////////////////////////
 		
 		public function FilterBase() 
 		{
-			setProcessingSize(FilterBase.WIDTH, FilterBase.HEIGHT);
+			setProcessingSizes();
 
 			_resultBmpData = new MetaBitmapData(FilterBase.WIDTH, FilterBase.HEIGHT, false, 0x0);
-			_previousBmpData = new BitmapData(FilterBase.WIDTH, FilterBase.HEIGHT, false, 0x0);
+			/*_previousBmpData = new BitmapData(FilterBase.WIDTH, FilterBase.HEIGHT, false, 0x0);*/
 			_previewBmpData = new BitmapData(FilterBase.PREVIEW_WIDTH, FilterBase.PREVIEW_HEIGHT, true, 0xff000000);
+			_channelBmpData = new BitmapData(FilterBase.PREVIEW_WIDTH, FilterBase.PREVIEW_HEIGHT, true, 0xff000000);
 			
 			rect = _resultBmpData.rect;
 			point = rect.topLeft;
@@ -112,24 +126,83 @@ package hislope.filters
 			tempHistogramMap = histogramBmpData.clone();
 		}
 		
+		
 		// PUBLIC METHODS /////////////////////////////////////////////////////////////////////
 		
-		public function setProcessingSize(width:int, height:int):void
+		public function setParam(paramName:String, value:*, updateAfter:Boolean = true):void
 		{
-			if (width > 0 && height > 0)
+			try
 			{
-				FilterBase.WIDTH = width;
-				FilterBase.HEIGHT = height;
-			} else {
-				throw new Error("Error: wrong bitmap sizes");
+				this[paramName] = value;
+			}
+			
+			catch (error:Error)
+			{
+				throw new Error("Error: Value " + paramName + " not defined on " + _name + ". Use getter/setter or define variable as public.");
+			}
+			
+			if (updateAfter) updateParams();
+		}
+		
+		
+		public function getParamValue(paramName:String):*
+		{
+			try
+			{
+				return this[paramName];
+			}
+			
+			catch (error:Error)
+			{
+				throw new Error("Error: Value " + paramName + " not defined on " + _name + ". Use getter/setter or define variable as public.");
 			}
 		}
+		
+		
+		public function updateParams():void
+		{
+			/*trace("updateParams");*/
+			FilterParser.updateParams(this);
+		}
+		
+		
+		public function updateUIFor(name:String):void
+		{
+			updateUI(name, this[name]);
+		}
+		
+		
+		public function updatePanelUI():void
+		{
+			updateParams();
+			FilterParser.updateParams(this, true);
+		}
+		
+		
+		public function updateUI(name:String, value:*):void
+		{
+			if (!filterPanel) return;
+			
+			/*trace("update slider", name, value, filterPanel);*/
+			filterPanel.updateUI(name, value);
+		}
+		
+		
+		public function setProcessingSizes():void
+		{
+			if (FilterBase.WIDTH <= 0 || FilterBase.HEIGHT <= 0)
+			{
+				throw new Error("Error: processing dimensions must be greater than 0.");
+			}
+		}
+		
 		
 		public function start():void
 		{
 			// to be implemented in subclasses
 			/*throw new Error(this + " start() needs to be overwritten.");*/
 		}
+		
 		
 		public function stop():void
 		{
@@ -138,6 +211,25 @@ package hislope.filters
 			
 			dispatchEvent(new Event(HiSlopeEvent.INPUT_RENDERED));
 		}
+		
+		
+		public function mouseMovePoint(normPoint:Point):void
+		{
+			// to be implemented in subclasses
+		}
+		
+		
+		public function mouseDownPoint(normPoint:Point):void
+		{
+			// to be implemented in subclasses
+		}
+		
+		
+		public function mouseUpPoint(normPoint:Point):void
+		{
+			// to be implemented in subclasses
+		}
+
 
 		/**
 		 *	Set initial values
@@ -153,106 +245,72 @@ package hislope.filters
 			resetParams();
 		}
 
+
 		/**
-		 * Post processes
+		 * Processes metaBmpData
 		 * @param metaBmpData MetaBitmapData 
 		 */
 		public function process(metaBmpData:MetaBitmapData):void
 		{
 			throw new Error("Error: You must overwrite method process(metaBmpData:MetaBitmapData) in your Filter class.");
-			// this gets overwritten in the subclass 
 		}
+
 		
-		public function getPreviewFor(metaBmpData:*):void
+		/**
+		 * Post processes
+		 * @param bmpData BitmapData 
+		 */
+		public function postPreview(bmpData:*):void
 		{
-			/* Do not make previews if there's no panel */
-			if (!filterPanel) return;
-			
-			//trace(this, rect, point);
-			
 			// store metaBmpData as result
-			_resultBmpData.copyPixels(metaBmpData, rect, point);
+			if (_storeResult) _resultBmpData.copyPixels(bmpData, rect, point);
 			
-			if (_drawHistogram) drawHistogram(metaBmpData.roi);
+			dispatchEvent(new Event(HiSlopeEvent.FILTER_PROCESSED));
+
+			/* Do not make previews if there's no panel */
+			if (filterPanel == null) return;
 			
-			if (_generatePreview)
+			if (_drawHistogram) drawHistogram(bmpData.rect);
+
+			if (fitPreview)
 			{
 				_previewBmpData.draw(_resultBmpData, previewScaleMatrix, null, null, null, PREVIEW_SMOOTHING);
 				
-				if (_histogramChannels == 7)
+				if (_histogramChannels != 7)
 				{
-					if (previewScale == 1.0)
-					{
-						_previewBmpData.fillRect(rect, 0xFF000000);
-						_previewBmpData.copyChannel(_resultBmpData, rect, point, _histogramChannels, _histogramChannels);
-					} else {
-						// TODO add 
-					}
+					_channelBmpData.copyPixels(_previewBmpData, _previewBmpData.rect, _previewBmpData.rect.topLeft);
+					_previewBmpData.fillRect(rect, 0xFF000000);
+					_previewBmpData.copyChannel(_channelBmpData, rect, point, _histogramChannels, _histogramChannels);
 				}
-			}
-			
-			dispatchEvent(new Event(FilterBase.PROCESSED));
-		}
-
-		public function updateParams():void
-		{
-			if (!filterPanel) return;
-
-			// check what had changed and update UI accordingly
-			for each (var param:Object in _defaultParams)
-			{
-				if (param.type == "button") continue;
 				
-				if (this[param.name] != param.lastValue)
+			} else {
+				
+				if (_histogramChannels != 7)
 				{
-					trace("param changed:", param.name, this[param.name]);
-					param.lastValue = this[param.name];
-					updateUI(param.name, this[param.name])
+					_previewBmpData.fillRect(rect, 0xFF000000);
+					_previewBmpData.copyChannel(_resultBmpData, rect, point, _histogramChannels, _histogramChannels);
 				}
 			}
 		}
 		
+
 		public function resetParams():void
 		{
-			trace("RESET FILTER PARAMS");
-			
-			for each (var param:Object in _defaultParams)
-			{
-				if (param.type == "button") continue;
-			
-				if (param.type != undefined)
-				{
-					param.type = param.type.toLowerCase();
-				} else {
-					// auto detect param type (number or boolean only)
-					param.type = typeof this[param.name];
-				}
-			
-				if (param.current == undefined)
-				{
-					if (param.type != "boolean") param.current = 0; else param.current = false;
-				}
-				
-				if (param.min == undefined) param.min = 0;
-				
-				if (param.max == undefined)
-				{
-					if (param.type == "rgb" || param.type == "current") param.max = 0xFFFFFF;
-					else if (param.type == "boolean") param.max = 2;
-					else param.max = 1;
-				}
-								
-				trace("\t", param.name + ": " + param.current + " (" + param.type + ")" + " [" + param.min + ", " + param.max + "]");
-			
-				// remember last value
-				param.lastValue = param.current;
-			
-				setParam(param.name, param.current, false);
-				updateUI(param.name, param.current);
-			}
-			
-			updateParams();
+			FilterParser.resetParams(this);
 		}
+
+
+		public function randomiseParams():void
+		{
+			FilterParser.randomiseParams(this);
+		}
+		
+		
+		public function randomiseColors(event:Event = null):void
+		{
+			FilterParser.randomiseParams(this, true);
+		}
+
 
 		public function dispose():void
 		{
@@ -262,84 +320,33 @@ package hislope.filters
 			// TODO remove other stuff here as well
 		}
 		
-		public function randomiseParams():void
+		
+		public function lowQuality():void
 		{
-			if (filterPanel) filterPanel.randomiseParams();
+			if (stage) stage.quality = StageQuality.LOW;
 		}
 		
-		public function randomiseColors():void
+		
+		public function highQuality():void
 		{
-			if (filterPanel) filterPanel.randomiseParams(true);
+			if (stage) stage.quality = StageQuality.HIGH;
 		}
 		
-		public function updateUI(name:String, value:*):void
-		{
-			if (!filterPanel) return;
-			
-			/*trace("update slider", name, value, filterPanel);*/
-			filterPanel.updateUI(name, value);
-		}
-		
-		public function setParam(name:String, value:*, updateAfter:Boolean = true):void
-		{
-			try
-			{
-				this[name] = value;
-			}
-			
-			catch (error:Error)
-			{
-				throw new Error("Error: Value " + name + " not defined on " + _name + ". Use getter/setter or define variable as public.");
-			}
-			
-			if (updateAfter) updateParams();
-		}
-		
-		public function getParamValue(name:String):*
-		{
-			try
-			{
-				return this[name];
-			}
-			
-			catch (error:Error)
-			{
-				throw new Error("Error: Value " + name + " not defined on " + _name + ". Use getter/setter or define variable as public.");
-			}
-		}
 		
 		protected function getHistogramDataFor(source:MetaBitmapData, useROI:Boolean = false):void
 		{
-			if (!useROI) _histogramData = source.histogram(source.rect);
-			else _histogramData = source.histogram(source.roi);
+			if (useROI) _histogramData = source.histogram(source.roi);
+			else _histogramData = source.histogram(source.rect);
 		}
-				
+		
+
 		// PRIVATE METHODS ////////////////////////////////////////////////////////////////////
 		
 		private function setParams():void
 		{
-			trace("\n" + this, "_presetParams", _presetParams);
-			
-			if (_presetParams)
-			{
-				for (var paramName:String in _presetParams)
-				{
-					trace("\tOVERRIDES\n\t", paramName + ": " + _presetParams[paramName]);
-					
-					setParam(paramName, _presetParams[paramName], false);
-
-					// nasty: update default params for this instance
-					for (var i:int = 0; i < _defaultParams.length; i++)
-					{
-						if (_defaultParams[i].name == paramName)
-						{
-							trace("\tOVERRIDE " + paramName + " from: " + _defaultParams[i].current + " to: " + _presetParams[paramName]);
-							_defaultParams[i].current = _presetParams[paramName];
-						}
-					}
-				}
-			}
+			FilterParser.setParams(this);
 		}
+		
 		
 		private function drawHistogram(rect:Rectangle):void
 		{
@@ -383,101 +390,161 @@ package hislope.filters
 			}
 		}
 		
+		
 		// EVENT HANDLERS /////////////////////////////////////////////////////////////////////
 		// GETTERS & SETTERS //////////////////////////////////////////////////////////////////
 		
-		public function get params():Object
+		public function get defaultParams():Object
 		{
 			return _defaultParams;
 		}
+
 		
+		public function get presetParams():Object
+		{
+			return _presetParams;
+		}
+		
+
 		public function get debugVars():Array
 		{
 			return _debugVars;
 		}
 
+
 		public function get resultMetaBmpData():MetaBitmapData
 		{
 			return _resultBmpData;
 		}
+
 		
 		public function get resultBitmapData():BitmapData
 		{
 			return _resultBmpData.clone() as BitmapData;
 		}
+
 		
 		public function set previewScale(value:Number):void
 		{
 			_previewScale = value;
 			previewScaleMatrix.identity();
 			previewScaleMatrix.scale(_previewScale, _previewScale);
+			
+			FilterBase.PREVIEW_WIDTH = FilterBase.WIDTH * _previewScale;
+			FilterBase.PREVIEW_HEIGHT = FilterBase.HEIGHT * _previewScale;
+			
+			_previewBmpData = new BitmapData(FilterBase.PREVIEW_WIDTH, FilterBase.PREVIEW_HEIGHT, true, 0xff000000);
+			_channelBmpData = new BitmapData(FilterBase.PREVIEW_WIDTH, FilterBase.PREVIEW_HEIGHT, true, 0xff000000);
 		}
+
 		
 		public function get previewScale():Number
 		{
 			return _previewScale;
 		}
+
 		
-		public function get preview():BitmapData
+		public function get previewBmpData():BitmapData
 		{
-			trace("!", _histogramChannels);
-			
 			if (_previewScale == 1 && _histogramChannels == 7) return _resultBmpData;
 			return _previewBmpData;
 		}
+
 		
 		public function get histogram():BitmapData
 		{
 			return histogramBmpData;
 		}
 
+
 		public function get histogramData():Vector.<Vector.<Number>>
 		{
 			return _histogramData;
 		}
-				
+		
+		
 		public function set enabled(value:Boolean):void
 		{
 			_enabled = value;
 			if (_enabled) start(); else stop();
+			
+			_minTime = 10000;
+			_maxTime = 0;
+			
+			if (filterPanel) filterPanel.updatePanelState();
 		}
+		
 		
 		public function get enabled():Boolean
 		{
 			return _enabled;
 		}
 		
-		public function set generatePreview(value:Boolean):void
+		
+		public function set displayPreview(value:Boolean):void
 		{
-			_generatePreview = value;
+			_displayPreview = value;
 			
-			if (_previewScale == 1) _generatePreview = false;
+			fitPreview = !(_previewScale == 1);
 		}
+		
 		
 		public function set generateHistogram(value:Boolean):void
 		{
 			_drawHistogram = value;
 		}
 		
+		
 		public function get generateHistogram():Boolean
 		{
 			return _drawHistogram;
 		}
+		
 		
 		public function get name():String
 		{
 			return _name;
 		}
 		
+		
 		public function get time():int
 		{
 			return _time;
 		}
 		
+		
+		public function get minTime():int
+		{
+			return _minTime;
+		}
+		
+		
+		public function get maxTime():int
+		{
+			return _maxTime;
+		}
+		
+		
 		public function set time(value:int):void
 		{
 			_time = value;
+			
+			if (_time < _minTime) _minTime = _time;
+			if (_time > _maxTime) _maxTime = _time; 
 		}
+		
+		
+		public function set storeResult(value:Boolean):void
+		{
+			_storeResult = value;
+		}
+		
+		
+		public function get storeResult():Boolean
+		{
+			return _storeResult;
+		}
+		
 		
 		public function set histogramChannels(value:int):void
 		{
@@ -491,18 +558,21 @@ package hislope.filters
 			return _resultBmpData.width;
 		}
 
+
 		public function get height():Number
 		{
 			return _resultBmpData.height;
 		}
+
 		
 		/**
 		 *	Sets reference to the FilterPanel
 		 */
-		public function set panel(value:Object):void
+		public function set panel(value:FilterPanel):void
 		{
 			filterPanel = value;
 		}
+
 		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
 		
