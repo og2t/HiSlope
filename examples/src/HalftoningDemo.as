@@ -42,8 +42,6 @@ package
 
 	import hislope.filters.pixelbender.fx.halftone.patterns.RasterPattern;
 	import hislope.filters.pixelbender.fx.halftone.patterns.StripesPattern;
-			/*import hislope.filters.pixelbender.fx.halftone.patterns.CircularDisksPattern;
-			import hislope.filters.pixelbender.fx.halftone.patterns.StarburstPattern;*/
 	import hislope.filters.pixelbender.fx.halftone.patterns.CirclesPattern;
 	
 	import hislope.gui.Output;
@@ -53,7 +51,7 @@ package
 
 	// CLASS //////////////////////////////////////////////////////////////////////////////////
 
-	[SWF(width='800', height='600', frameRate='60', backgroundColor='0x181818')]
+	[SWF(width='1280', height='768', frameRate='60', backgroundColor='0x181818')]
 	public class HalftoningDemo extends Sprite
 	{
 		private var counter:Number = 0;
@@ -80,9 +78,6 @@ package
 			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render);
 			
 			/*var input:WebCam = new WebCam();*/
-			/*var input:Raytracer = new Raytracer();*/
-
-			/*var blur:Blur = new Blur();*/
 
 			filterChain.addFilter(input, false, false, true, false);
 			
@@ -93,9 +88,6 @@ package
 			/*filterChain.addFilter(blur, true);*/
 			filterChain.addFilter(new HSBC(), false, false, false, false);
 			/*filterChain.addFilter(new ASCIIMii());*/
-
-					/*filterChain.addFilter(new CircularDisksPattern());*/
-					/*filterChain.addFilter(new StarburstPattern());*/
 
 			filterChain.addFilter(new StripesPattern(), false, false, false, false);
 			filterChain.addFilter(new RasterPattern(), false, false, false, false);
@@ -108,15 +100,6 @@ package
 			filterChain.addFilter(new AngledBWHalftone(), false, false, false, false);
 			filterChain.addFilter(new IA_Halftone(), false, false, false, false);
 			filterChain.addFilter(new Pointillize(), false, false, false, false);
-			/*filterChain.addFilter(new NoiseDitherer());*/
-			/*filterChain.addFilter(new MotionCapture());*/
-			/*filterChain.addFilter(new BlobDetector());*/
-			
-			/*TweenLite.to(blur, 10,
-			{
-				onUpdate: blur.updatePanelUI,
-				amount: 0
-			});*/
 			
 			function render(event:Event):void
 			{

@@ -75,7 +75,6 @@ package
 			var output:Output = new Output(processedBmpData, "output", true, DEBUG);
 			addChild(output);
 			output.x = filterChain.width + 10;
-			/*output.scale = 2.0;*/
 			
 			addChild(filterChain);
 		

@@ -46,7 +46,6 @@ package
 			var output:Output = new Output(processedBmpData, "output");
 			addChild(output);
 			output.x = filterChain.width + 10;
-			output.scale = 1.0;
 			
 			var input:WebCam = new WebCam();
 			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render);

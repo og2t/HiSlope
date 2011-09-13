@@ -83,7 +83,6 @@ package
 			var inputWC:WebCam = new WebCam();
 			var inputVP:VideoPlayer = new VideoPlayer();
 			inputVP.addVideo("videos/black_or_white.mov", "B&W Video");
-			/*inputVP.addVideo("videos/squint.mov", "Squint");*/
 			
 			filterChain.addFilter(inputVP, true);
 			filterChain.addFilter(inputWC, false, false, false, false);

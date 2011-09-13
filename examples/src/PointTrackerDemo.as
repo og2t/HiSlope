@@ -75,7 +75,7 @@ package
 			
 			FilterBase.stage = stage;
 
-			filterChain = new FilterChain("Point Tracker", 640 / 2, 480 / 2);
+			filterChain = new FilterChain("Face Goo", 640 / 2, 480 / 2);
 			addChild(filterChain);
 			filterChain.x = 0;
 			
@@ -88,15 +88,12 @@ package
 			input = new WebCam();
 			/*input = new VideoPlayer();*/
 			/*input.addVideo("videos/black_or_white_sequence.mov", "B&W Video");*/
-			/*input.addVideo("videos/squint.mov", "Squint");*/
-			/*input.addVideo("videos/face_gestures.mov", "Face Fun");*/
-			/*input.addVideo("videos/eye_track_b1.mov", "Eye Tracking");*/
 			input.addEventListener(HiSlopeEvent.INPUT_RENDERED, render);
 
 			// stack filters
 			filterChain.addFilter(input, true, false, false);
 			filterChain.addFilter(faceAPIDetect, true);
-			/*filterChain.addFilter(new HSBC({hue: 0.000, saturation: -100.000, brightness: 31.000, contrast: 100.000}), false, false, false, false);*/
+
 			faceGoo = new FaceGoo();
 			hsbc = new HSBC();
 			
@@ -106,7 +103,7 @@ package
 			
 			output1 = new Output(processedBmpData, "output");
 			output2 = new Output(pointTracker, "pointTracker");
-			/*output = new Output(faceAPIDetect, "faceAPIDetect");*/
+			
 			addChild(output1);
 			addChild(output2);
 			output1.scale = 2.0;
