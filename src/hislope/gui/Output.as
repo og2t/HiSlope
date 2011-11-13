@@ -146,9 +146,12 @@ package hislope.gui
 		{
 			_scale = value;
 			outputBitmap.scaleX = outputBitmap.scaleY = value;
-			if (window) window.setSize(outputBitmap.width, outputBitmap.height + 20);
-			saveButton.x = outputBitmap.width - 102;
-			setTitle();
+			if (window)
+			{
+				window.setSize(outputBitmap.width, outputBitmap.height + 20);
+				saveButton.x = outputBitmap.width - 102;
+				setTitle();
+			}
 		}
 		
 		// HELPERS ////////////////////////////////////////////////////////////////////////////
